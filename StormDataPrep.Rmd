@@ -1,0 +1,155 @@
+---
+title: "Storm data preparation"
+author: "Thomas M. Massie"
+date: "1/8/2018"
+output: 
+  html_document: 
+    keep_md: true
+---
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include = FALSE}
+rm(list=ls())
+```
+
+
+```{r include = FALSE}
+# Load libraries.
+library(repmis)
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(chron)
+library(sp)
+```
+
+
+# Storm data preparation
+
+
+
+## Loading the data
+
+I downloaded the data sets from NOAA's [National Hurricane Center](http://www.nhc.noaa.gov/data/#hurdat), one for hurricanes and one for typhoons, and stored them in my respective GitHub repository. Data format is the revised Atlantic hurricane database (HURDAT2, see [here](http://www.aoml.noaa.gov/hrd/hurdat/Data_Storm.html) for details).  
+Now, to start I will load both data sets from my repository, and add a variable that indicates the respective ocean it belongs to.
+```{r echo = TRUE, message = FALSE}
+dd.atlantic <- read_csv("https://raw.githubusercontent.com/thomassie/Storms/master/Data/atlantic.csv?token=AFYWCm0CTFVvcnJCMs2F3z0u0Ce_ditGks5aXIiEwA%3D%3D") %>%
+  mutate(Ocean = "atlantic")
+dd.pacific  <- read_csv("https://raw.githubusercontent.com/thomassie/Storms/master/Data/pacific.csv?token=AFYWCuigbUpPM8d8V93uIzgYr-aat70Eks5aXIlcwA%3D%3D") %>%
+  mutate(Ocean = "pacific")
+```
+
+This is what the original Atlantic data looks like:
+```{r echo = FALSE}
+str(dd.atlantic)
+```
+
+...and the data from the Pacific:
+```{r echo = FALSE}
+str(dd.pacific)
+```
+
+I combine both data sets to a single one, and remove spaces in variable names by '.'.
+```{r}
+dd.org <- bind_rows(dd.atlantic, dd.pacific)
+names(dd.org) <- make.names(names(dd.org), unique=TRUE)
+str(dd.org)
+```
+
+
+
+## Data wrangling
+
+Next, I make some adjustments but leave the original variables as they were (for comparison): 
+
+- One important step is making new date, time, and datetime variables. 
+- Also, wind speed is converted into the metric system (km per hour). 
+- Further, I included a variable named 'Duration' which will come into play at a latter point when the duration of a storm is calculated. 
+- And last, there are some inconsistencies in the data: Generally, when there is no data availabe for pressure cells were filled with '-999'. However, sometimes it is '-99' or odd entries. To make it homogeneous and to avoid trouble when using the values in calculation, I changed all these entries to 'NA'.
+```{r}
+dd <- dd.org %>%
+  mutate(Date.new = as.Date(as.character(Date), "%Y%m%d")) %>%
+  mutate(Time.new = times(sub("(.{2})", "\\1:", sprintf("%04d:00", Time)))) %>%
+  # mutate(DateTime.new = with(dd.org, as.POSIXct(paste(Date.new, Time.new)))) %>%
+  mutate(DateTime.new = with(dd.org, as.POSIXct(paste(Date.new, Time.new)))) %>%
+  mutate(Year = year(DateTime.new)) %>%
+  mutate(DateTime.sameyear = as.POSIXct(strptime(format(DateTime.new, "%m/%d %H:%M:%S"), "%m/%d %H:%M:%S"))) %>%
+  mutate(Maximum.Wind.kph = round(Maximum.Wind * 1.609344, 0)) %>%
+  mutate(ID.plus = paste(Name, " (",ID,")", sep = "")) %>%
+  mutate(Duration = NA) %>%   # Needed at a latter point.
+  # For some storms there's no data about wind speeds.
+  # Hence, these are removed here.
+  filter(Maximum.Wind >= 0) %>%
+  mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, NA))
+# mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, -999)) 
+```
+
+Then, for some variables it makes more sense if they are declared as factors.
+```{r}
+dd[c("ID", 
+     "Year",
+     "ID.plus",
+     "Status",
+     "Ocean")] = lapply(dd[c("ID", 
+                             "Year",
+                             "ID.plus",
+                             "Status",
+                             "Ocean")], as.factor)
+```
+
+
+For plotting reasons, entries refering to the position of a storm at a given time have to be transferred into a format that is easier to handle, i.e. numeric. For example, '28.0N' is becomming '28', and '94.8W' is transferred into '265.2'. Westward and soutward values are getting a negative sign, just like in an cartesian system. However, due to the fact that mapping is often far easier with positive values, both, 360 (degrees) is added to westward and eastward values. Hope that is comprehensible. 
+```{r}
+dd$Latitude[which(grepl("N", dd$Latitude)==TRUE)] <- as.numeric(gsub("N", "", dd$Latitude[which(grepl("N", dd$Latitude)==TRUE)]))
+dd$Latitude[which(grepl("S", dd$Latitude)==TRUE)] <- -as.numeric(gsub("S", "", dd$Latitude[which(grepl("S", dd$Latitude)==TRUE)]))
+dd$Longitude[which(grepl("W", dd$Longitude)==TRUE)] <- -as.numeric(gsub("W", "", dd$Longitude[which(grepl("W", dd$Longitude)==TRUE)])) + 360
+dd$Longitude[which(grepl("E", dd$Longitude)==TRUE)] <- as.numeric(gsub("E", "", dd$Longitude[which(grepl("E", dd$Longitude)==TRUE)])) + 360
+# Make both columns numeric.
+dd$Latitude <- as.numeric(dd$Latitude)
+dd$Longitude <- as.numeric(dd$Longitude)
+```
+
+
+Finally, as announced previuously, the duration of a storm is calculated.
+```{r}
+# ids <- as.character(unique(dd$ID))
+for (i in as.character(unique(dd$ID))) {
+  dd.i <- filter(dd, ID == i)
+  for (n in 1:length(dd.i$ID)) {
+    # '%--%' is the interval operator returning the time difference (lubridate).
+    dd.i$Duration[n] <- as.numeric(as.duration(dd.i$DateTime.new[1] %--% dd.i$DateTime.new[n]))/60/60/24
+  }
+  dd$Duration[which(dd$ID %in% i)] <- dd.i$Duration
+}
+```
+
+There you go! 
+```{r echo = FALSE}
+str(dd)
+```
+
+
+
+## Storing the data set
+
+I save the workspace for later use and exploration!
+```{r}
+save.image("Data/StormWS.RData")
+```
+
+
+
+
+
+
+
+
+
+
+
+
