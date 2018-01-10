@@ -248,7 +248,7 @@ str(dd.org)</code></pre>
                              &quot;ID.plus&quot;,
                              &quot;Status&quot;,
                              &quot;Ocean&quot;)], as.factor)</code></pre>
-<p>For plotting reasons, entries refering to the position of a storm at a given time have to be transferred into a format that is easier to handle, i.e. numeric. For example, ‘28.0N’ is becomming ‘28’, and ‘94.8W’ is transferred into ‘265.2’. Westward and soutward values are getting a negative sign, just like in an cartesian system. However, due to the fact that mapping is often far easier with positive values, both, 360 (degrees) is added to westward and eastward values. Hope that is comprehensible.</p>
+<p>For plotting reasons, entries refering to the position of a storm at a given time have to be transferred into a format that is easier to handle, i.e. numeric. For example, ‘28.0N’ is becomming ‘28’, and ‘94.8W’ is transferred into ‘265.2’. Westward and southward values are getting a negative sign, just like in an cartesian system. However, due to the fact that mapping is often far easier with positive values, 360 (degrees) is added to westward and eastward values. Hope that is comprehensible.</p>
 <pre class="r"><code>dd$Latitude[which(grepl(&quot;N&quot;, dd$Latitude)==TRUE)] &lt;- as.numeric(gsub(&quot;N&quot;, &quot;&quot;, dd$Latitude[which(grepl(&quot;N&quot;, dd$Latitude)==TRUE)]))
 dd$Latitude[which(grepl(&quot;S&quot;, dd$Latitude)==TRUE)] &lt;- -as.numeric(gsub(&quot;S&quot;, &quot;&quot;, dd$Latitude[which(grepl(&quot;S&quot;, dd$Latitude)==TRUE)]))
 dd$Longitude[which(grepl(&quot;W&quot;, dd$Longitude)==TRUE)] &lt;- -as.numeric(gsub(&quot;W&quot;, &quot;&quot;, dd$Longitude[which(grepl(&quot;W&quot;, dd$Longitude)==TRUE)])) + 360
@@ -262,7 +262,7 @@ for (i in as.character(unique(dd$ID))) {
   dd.i &lt;- filter(dd, ID == i)
   for (n in 1:length(dd.i$ID)) {
     # '%--%' is the interval operator returning the time difference (lubridate).
-    dd.i$Duration[n] &lt;- as.numeric(as.duration(dd.i$DateTime.new[1] %--% dd.i$DateTime.new[n]))/60/60/24
+    dd.i$Duration[n] &lt;- round(as.numeric(as.duration(dd.i$DateTime.new[1] %--% dd.i$DateTime.new[n]))/60/60/24, 2)
   }
   dd$Duration[which(dd$ID %in% i)] &lt;- dd.i$Duration
 }</code></pre>
@@ -299,7 +299,7 @@ for (i in as.character(unique(dd$ID))) {
 ##  $ DateTime.sameyear: POSIXct, format: &quot;2018-06-25 00:00:00&quot; &quot;2018-06-25 06:00:00&quot; ...
 ##  $ Maximum.Wind.kph : num  129 129 129 129 129 113 97 97 80 80 ...
 ##  $ ID.plus          : Factor w/ 2845 levels &quot;ABBY (AL011968)&quot;,..: 1562 1562 1562 1562 1562 1562 1562 1562 1562 1562 ...
-##  $ Duration         : num  0 0.25 0.5 0.75 0.875 1 1.25 1.5 1.75 2 ...</code></pre>
+##  $ Duration         : num  0 0.25 0.5 0.75 0.88 1 1.25 1.5 1.75 2 ...</code></pre>
 </div>
 <div id="storing-the-data-set" class="section level2">
 <h2>Storing the data set</h2>

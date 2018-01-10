@@ -170,7 +170,7 @@ dd[c("ID",
 ```
 
 
-For plotting reasons, entries refering to the position of a storm at a given time have to be transferred into a format that is easier to handle, i.e. numeric. For example, '28.0N' is becomming '28', and '94.8W' is transferred into '265.2'. Westward and soutward values are getting a negative sign, just like in an cartesian system. However, due to the fact that mapping is often far easier with positive values, both, 360 (degrees) is added to westward and eastward values. Hope that is comprehensible. 
+For plotting reasons, entries refering to the position of a storm at a given time have to be transferred into a format that is easier to handle, i.e. numeric. For example, '28.0N' is becomming '28', and '94.8W' is transferred into '265.2'. Westward and southward values are getting a negative sign, just like in an cartesian system. However, due to the fact that mapping is often far easier with positive values, 360 (degrees) is added to westward and eastward values. Hope that is comprehensible. 
 
 ```r
 dd$Latitude[which(grepl("N", dd$Latitude)==TRUE)] <- as.numeric(gsub("N", "", dd$Latitude[which(grepl("N", dd$Latitude)==TRUE)]))
@@ -191,7 +191,7 @@ for (i in as.character(unique(dd$ID))) {
   dd.i <- filter(dd, ID == i)
   for (n in 1:length(dd.i$ID)) {
     # '%--%' is the interval operator returning the time difference (lubridate).
-    dd.i$Duration[n] <- as.numeric(as.duration(dd.i$DateTime.new[1] %--% dd.i$DateTime.new[n]))/60/60/24
+    dd.i$Duration[n] <- round(as.numeric(as.duration(dd.i$DateTime.new[1] %--% dd.i$DateTime.new[n]))/60/60/24, 2)
   }
   dd$Duration[which(dd$ID %in% i)] <- dd.i$Duration
 }
@@ -232,7 +232,7 @@ There you go!
 ##  $ DateTime.sameyear: POSIXct, format: "2018-06-25 00:00:00" "2018-06-25 06:00:00" ...
 ##  $ Maximum.Wind.kph : num  129 129 129 129 129 113 97 97 80 80 ...
 ##  $ ID.plus          : Factor w/ 2845 levels "ABBY (AL011968)",..: 1562 1562 1562 1562 1562 1562 1562 1562 1562 1562 ...
-##  $ Duration         : num  0 0.25 0.5 0.75 0.875 1 1.25 1.5 1.75 2 ...
+##  $ Duration         : num  0 0.25 0.5 0.75 0.88 1 1.25 1.5 1.75 2 ...
 ```
 
 

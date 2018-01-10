@@ -105,20 +105,103 @@ dd.sum.year <- dd.sum.year %>%
   mutate(DateTime.p = as.POSIXct(p.min, origin = "1970-01-01")) %>%
   mutate(DateTime.d = as.POSIXct(d.max, origin = "1970-01-01")) %>%
   mutate(DateTime.w = as.POSIXct(w.max, origin = "1970-01-01"))
+
+str(dd.sum.year)
 ```
+
 
 
 Then I make a couple of choices to get a nice ranking for a specific time period I would like to put my focus on.
 ```{r}
-# The first 'n.select' storms are selected for highlightening.
+# The first 'n.select' storms are selected for ranking
 n.select <- 10
+# Time window: from 'year.min' to 'year.max'. 
+# Fill in identical years to get data only of year x.
+year.min <- 2012
+year.max <- 2015
+```
 
-# Longest duration (enire data set).
-topn.Duration       <- arrange(dd.sum, desc(dd.sum$Max.Duration))[1:n.select,]
-# Strongest wind speed recorded (entire data set)
-topn.Strength.Max  <- arrange(dd.sum, desc(dd.sum$Max.Strength.kph))[1:n.select,]
-# Minimum pressure (entire data set)
-topn.Pressure.Min  <- arrange(dd.sum, -desc(dd.sum$Min.Pressure))[1:n.select,]
+
+A first glimpse at the rankings of the **entire** data.
+```{r}
+# Ranking according to...
+# ...longest duration (enire data set).
+topn.Duration       <- arrange(dd.sum, desc(dd.sum$Max.Duration))[1:n.select,] %>%
+  mutate(criterion = "duration")
+# Rearrange levels.
+topn.Duration$ID.plus <- factor(topn.Duration$ID.plus, 
+                                levels = topn.Duration$ID.plus[desc(topn.Duration$Max.Duration)])
+# ...strongest wind speed recorded (entire data set)
+topn.Strength.Max  <- arrange(dd.sum, desc(dd.sum$Max.Strength.kph))[1:n.select,] %>%
+  mutate(criterion = "wind")
+# Rearrange levels.
+topn.Strength.Max$ID.plus <- factor(topn.Strength.Max$ID.plus, 
+                                levels = topn.Strength.Max$ID.plus[desc(topn.Strength.Max$Max.Strength.kph)])
+# ...minimum pressure (entire data set)
+topn.Pressure.Min  <- arrange(dd.sum, -desc(dd.sum$Min.Pressure))[1:n.select,] %>%
+  mutate(criterion = "pressure")
+# Rearrange levels.
+topn.Pressure.Min$ID.plus <- factor(topn.Pressure.Min$ID.plus, 
+                                levels = topn.Pressure.Min$ID.plus[desc(topn.Pressure.Min$Min.Pressure)])
+#dd.topn <- rbind(topn.Duration, topn.Strength.Max, topn.Pressure.Min)
+```
+
+
+```{r}
+topn.Duration %>%
+  ggplot(aes(x = ID.plus,
+             y = Max.Duration)) +
+  geom_bar(stat="identity") +
+  geom_col() +
+  # theme_bw() +
+  theme_classic() +
+  xlab("") +
+  ylab("") 
++
+  theme(axis.text = element_text(size = 50),
+        axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank()) +
+  geom_text(aes(label = frequency),
+            size = 14,
+            color = "white",
+            position = position_dodge(width = 0.9),
+            hjust = 1.2) +
+  theme(legend.position="none")
+  
+scale_fill_manual(values = colorNumeric(palette = "YlOrRd", domain = topn.Duration$Max.Duration)) +
+  theme_()
+
+
+
+
+
+library("cowplot")
+plot_grid(bxp, dp, bp + rremove("x.text"), 
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 2)
+```
+
+
+
+Now I select specific parts of the prepared dataset accrding to the choices I made.
+```{r}
+# All storms between 'year.min' and 'year.max'. 
+dd.select <- dd %>% 
+  filter(year.min <= year(Date.new) & year(Date.new) <= year.max)
+
+# The summary statistics for the selected data.
+dd.select.sum <- dd.sum %>%
+  filter(ID %in% dd.select$ID)
+
+# Longest duration (selection).
+topn.select.Duration      <- arrange(dd.select.sum, desc(dd.select.sum$Max.Duration))[1:n.select,]
+# Strongest wind recorded (selection)
+topn.select.Strength.Max  <- arrange(dd.select.sum, desc(dd.select.sum$Max.Strength.kph))[1:n.select,]
+# Lowest pressure (selection)
+topn.select.Lowest.       <- arrange(dd.select.sum, -desc(dd.select.sum$Max.Strength.kph))[1:n.select,]
+# Minimum pressure (selection)
+topn.select.Pressure.Min  <- arrange(dd.select.sum, -desc(dd.select.sum$Min.Pressure))[1:n.select,]
 ```
 
 
