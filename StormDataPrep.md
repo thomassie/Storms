@@ -242,7 +242,7 @@ There you go!
 I save the workspace for later use and exploration!
 
 ```r
-save.image("Data/StormWS.RData")
+save.image("Data/StormDataWS.RData")
 ```
 
 
