@@ -23,8 +23,7 @@ rm(list=ls())
 library(repmis)
 library(tidyverse)
 library(lubridate)
-library(scales)
-library(chron)
+library(chron)      # https://cran.r-project.org/web/packages/sp/sp.pdf
 library(sp)
 ```
 
