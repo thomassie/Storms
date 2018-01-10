@@ -44,7 +44,7 @@ library(RColorBrewer)
 
 ```{r}
 # Entire workspace.
-source_data("https://github.com/thomassie/Storms/blob/master/Data/StormWS.RData?raw=true")
+source_data("https://github.com/thomassie/Storms/blob/master/Data/StormDataWS.RData?raw=true")
 ```
 
 
