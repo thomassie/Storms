@@ -20,6 +20,8 @@ rm(list=ls())
 
 ```{r include = FALSE}
 # Load libraries.
+library(repmis)
+library(RCurl)
 library(tidyverse)
 library(ggplot2)
 library(ggExtra)
@@ -138,6 +140,182 @@ str(dd)
 ```
 
 
+## First impression
+
+I generate a new dataset that includes a couple of summary statistics such as minimum pressure or maximum duration for each **storm**...
+```{r}
+# Some summary statistics to see which was the strongest storm etc.
+dd.sum <- dd %>%
+  group_by(ID) %>%
+  summarise(Name = unique(Name),
+            ID.plus = unique(ID.plus),
+            Year = first(Year),
+            Min.Pressure = min(Minimum.Pressure, na.rm = TRUE),
+            Max.Duration = max(Duration, na.rm = TRUE),
+            Mean.Strength.kph = round(mean(Maximum.Wind.kph, 0)),
+            Max.Strength.kph = max(Maximum.Wind.kph, na.rm = TRUE),
+            Storm.Start = format(DateTime.new[1], "%d/%m %H:%M:%S"),
+            Storm.Stop = format(DateTime.new[length(DateTime.new)], "%d/%m %H:%M:%S")) %>%
+  arrange(-desc(Year))
+str(dd.sum)
+```
+
+...and for each year. I use this dataset for mapping. You'll see this at a later point.
+```{r}
+dd.sum.year <- dd %>%
+  group_by(Year) %>%
+  summarise(DateTime.new = first(DateTime.new),
+            # Date = first(DateTime.new[which(Minimum.Pressure == min(Minimum.Pressure, na.rm = TRUE))]),
+            Min.Pressure = min(Minimum.Pressure, na.rm = TRUE),
+            Max.Duration = max(Duration, na.rm = TRUE),
+            Mean.Strength.kph = round(mean(Maximum.Wind.kph, 0)),
+            Max.Strength.kph = max(Maximum.Wind.kph, na.rm = TRUE)) %>%
+  arrange(-desc(Year))
+```
+
+
+But first, I have to assign the exact dates and times for these annual extreme values.
+```{r}
+# Get exact date and time for all extreme values!
+p.min <- rep(NA, length(unique(dd$Year)))
+d.max <- p.min
+w.max <- p.min
+for (i in 1:length(unique(dd$Year))) {
+  p.min[i] = first(filter(dd, 
+                          Year == unique(dd$Year)[i] & 
+                            Minimum.Pressure == as.character(dd.sum.year$Min.Pressure[i]))$DateTime.new)
+  d.max[i] = first(filter(dd, 
+                          Year == unique(dd$Year)[i] & 
+                            Duration == as.character(dd.sum.year$Max.Duration[i]))$DateTime.new)
+  w.max[i] = first(filter(dd, 
+                          Year == unique(dd$Year)[i] & 
+                            Maximum.Wind.kph == as.character(dd.sum.year$Max.Strength.kph[i]))$DateTime.new)
+}
+
+dd.sum.year <- dd.sum.year %>%
+  mutate(DateTime.p = as.POSIXct(p.min, origin = "1970-01-01")) %>%
+  mutate(DateTime.d = as.POSIXct(d.max, origin = "1970-01-01")) %>%
+  mutate(DateTime.w = as.POSIXct(w.max, origin = "1970-01-01"))
+```
+
+
+Then I make a couple of choices to get a nice ranking for a specific time period I would like to put my focus on.
+```{r}
+# The first 'n.select' storms are selected for highlightening.
+n.select <- 10
+
+# Longest duration (enire data set).
+topn.Duration       <- arrange(dd.sum, desc(dd.sum$Max.Duration))[1:n.select,]
+# Strongest wind speed recorded (entire data set)
+topn.Strength.Max  <- arrange(dd.sum, desc(dd.sum$Max.Strength.kph))[1:n.select,]
+# Minimum pressure (entire data set)
+topn.Pressure.Min  <- arrange(dd.sum, -desc(dd.sum$Min.Pressure))[1:n.select,]
+```
+
+
+Let's have a look at these storms. First, I want to see which are the storms that lasted the longest. (I use a dataset called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
+```{r}
+dd.s <- topn.Duration
+
+# Create an indicator for grouping.
+groups = as.character(unique(dd.s$ID.plus))
+
+# The basic map.
+map = leaflet(dd.s) %>% 
+  # addProviderTiles(providers$CartoDB.Positron)
+  # addProviderTiles(providers$Esri.WorldTerrain)
+  addProviderTiles(providers$CartoDB.DarkMatter)
+
+# Colors of a specific palette assigned to 'Maximum.Wind'.
+groupColors = colorNumeric(palette = "YlOrRd", domain = dd.s$Maximum.Wind.kph)
+
+# Grouping!
+for (g in groups) {
+  d = dd[dd$ID.plus == g, ]
+  map = map %>% 
+    addPolylines(data = d,
+                 color = "#788E95",
+                 group = g,
+                 lng = ~ Longitude,
+                 lat = ~ Latitude,
+                 weight = 0.6,
+                 opacity = 0.6) %>%
+    addCircleMarkers(data = d,
+                     group = g,
+                     lng = ~Longitude, 
+                     lat = ~Latitude, 
+                     color = ~groupColors(Maximum.Wind.kph),
+                     weight = 2,
+                     # fill = FALSE,
+                     radius = ~(Maximum.Wind^1.2)/50,
+                     # radius = ~sqrt(Maximum.Wind)*2,
+                     popup = paste("Name: ", d$Name, "<br>",
+                                   "Date: ", d$Date.new, "<br>",
+                                   "Time: ", d$Time.new, "<br>",
+                                   "Status: ", d$Status, "<br>",
+                                   "Maximum wind speed: ", d$Maximum.Wind.kph, "km/h", "<br>"))
+}
+
+map %>%
+  addLayersControl(overlayGroups = groups)
+```
+
+
+```{r}
+dd.s %>%
+  ggplot() +
+  aes(x = DateTime.new,
+      y = Minimum.Pressure
+  ) +
+  stat_density_2d(geom = "raster", 
+                  aes(fill = ..density..), 
+                  contour = FALSE,
+                  alpha = 0.9,
+                  show.legend = FALSE) +
+  scale_fill_gradientn(colours = rev( brewer.pal( 9, "Greys" ))) +
+  geom_point(alpha = 0.5,
+             size = 0.3,
+             colour = "#FBFBFA") +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              span = 0.2,
+              colour = "#F93A2E",
+              alpha = 0.9,
+              size = 1.2) +
+  geom_smooth(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
+              aes(x = DateTime.p,
+                  y = Min.Pressure),
+              method = "lm",
+              se = TRUE,
+              span = 0.2,
+              linetype = "dashed",
+              colour = "#F93A2E",
+              alpha = 0.9,
+              size = 0.5) +
+  geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
+             aes(x = DateTime.p,
+                 y = Min.Pressure),
+             shape = 1,
+             size = 1.2,
+             stroke = 0.8,
+             colour = "#F93A2E") +
+  geom_line(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.new) & year(dd.sum.year$DateTime.p) <= year.max),
+            aes(x = (DateTime.p),
+                y = Min.Pressure),
+            size = 0.3,
+            alpha = 0.9,
+            colour = "#F93A2E") +
+  theme_bw() +
+  geom_rug(alpha = 0.025) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  labs(x = "Year", y = "Minimum Pressure (mbar)",
+       title = "")
+```
+
+
+
+
 
 ## Storing the data set
 
@@ -145,8 +323,27 @@ I am going to save the workspace and the data set for later use and exploration!
 ```{r}
 save.image("Data/StormWS.RData")
 write.csv(dd, file = "Data/StormDataset.csv")
+write.csv(dd.sum, file = "Data/StormDatasetSummaryStats.csv")
 ```
 
+
+
+
+
+
+
+
+
+
+## Loading the data set
+
+```{r}
+# Entire workspace.
+source_data("https://github.com/thomassie/Storms/blob/master/Data/StormWS.RData?raw=true")
+# Datasets.
+dd <-  getURL("https://raw.githubusercontent.com/thomassie/Storms/master/Data/StormDataset.csv?token=AFYWCmhcgK3JQcnOB2gugWdbZ3Whd7_Nks5aXlK8wA%3D%3D")
+dd <- read.csv(text = dd)
+```
 
 
 
