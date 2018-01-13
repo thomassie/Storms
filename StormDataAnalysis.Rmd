@@ -151,7 +151,7 @@ topn.Pressure.Min$ID.plus <- factor(topn.Pressure.Min$ID.plus,
 
 I generate three barplots, one for each criterion...
 ```{r}
-# Barplot for durations.
+# Barplot for duration.
 plot.dur <- topn.Duration %>%
   ggplot(aes(x = ID.plus,
              y = Max.Duration)) +
@@ -204,7 +204,7 @@ plot.wind <- topn.Strength.Max %>%
   coord_flip() +
   scale_x_discrete(limits = rev(levels(topn.Strength.Max$ID.plus)))
 
-# Barplot for wind speed.
+# Barplot for pressure.
 plot.pres <- topn.Pressure.Min %>%
   ggplot(aes(x = ID.plus,
              y = Min.Pressure)) +
@@ -374,7 +374,7 @@ topn.select.Pressure.Min  <- arrange(dd.select.sum, -desc(dd.select.sum$Min.Pres
 
 
 Let's have a look at these storms. First, I want to see which are the storms that lasted the longest. (I use a dataset called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
-```{r warning = FALSE, include = FALSE}
+```{r warning = FALSE, message = FALSE}
 dd.s <- topn.Duration
 
 # Create an indicator for grouping.
@@ -388,6 +388,7 @@ map = leaflet(dd.s) %>%
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
 groupColors = colorNumeric(palette = "YlOrRd", domain = dd.s$Maximum.Wind.kph)
+# groupColors = scale_colour_brewer("dd.s$Saffir.Simpson")
 
 # Grouping!
 for (g in groups) {
@@ -405,6 +406,7 @@ for (g in groups) {
                      lng = ~Longitude, 
                      lat = ~Latitude, 
                      color = ~groupColors(Maximum.Wind.kph),
+                     # color = ~groupColors(Saffir.Simpson),
                      weight = 2,
                      # fill = FALSE,
                      radius = ~(Maximum.Wind^1.2)/50,
@@ -420,8 +422,44 @@ map %>%
   addLayersControl(overlayGroups = groups)
 ```
 
+Same plot using the [Saffir-Simpson](https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale) scale for colour-coding.
+```{r warning = FALSE, message = FALSE}
+# Colors of a specific palette assigned to 'Maximum.Wind'.
+# groupColors = colorNumeric(palette = "YlOrRd", domain = dd.s$Maximum.Wind.kph)
+groupColors = colorFactor(palette = "Spectral", domain = dd.s$Saffir.Simpson )
 
+# Grouping!
+for (g in groups) {
+  d = dd[dd$ID.plus == g, ]
+  map = map %>% 
+    addPolylines(data = d,
+                 color = "#788E95",
+                 group = g,
+                 lng = ~ Longitude,
+                 lat = ~ Latitude,
+                 weight = 0.6,
+                 opacity = 0.6) %>%
+    addCircleMarkers(data = d,
+                     group = g,
+                     lng = ~Longitude, 
+                     lat = ~Latitude, 
+                     # color = ~groupColors(Maximum.Wind.kph),
+                     color = ~groupColors(Saffir.Simpson),
+                     weight = 2,
+                     # fill = FALSE,
+                     radius = ~(Maximum.Wind^1.2)/50,
+                     # radius = ~sqrt(Maximum.Wind)*2,
+                     popup = paste("Name: ", d$Name, "<br>",
+                                   "Date: ", d$Date.new, "<br>",
+                                   "Time: ", d$Time.new, "<br>",
+                                   "Status: ", d$Status, "<br>",
+                                   "Saffir-Simpson scale: ", d$Saffir.Simpson, "<br>",
+                                   "Maximum wind speed: ", d$Maximum.Wind.kph, "km/h", "<br>"))
+}
 
+map %>%
+  addLayersControl(overlayGroups = groups)
+```
 
 
 

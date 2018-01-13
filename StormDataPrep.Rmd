@@ -91,8 +91,8 @@ dd <- dd.org %>%
   mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, NA)) %>%
   # mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, -999)) 
   # Add a variable for Saffir-Simpson scale and assign respective values.
-  mutate(Saffir.Simpson = ifelse(Maximum.Wind.kph %in% 0:62, "Tropical.Depression",
-                                 ifelse(Maximum.Wind.kph %in% 63:118, "Tropical.Storm",
+  mutate(Saffir.Simpson = ifelse(Maximum.Wind.kph %in% 0:62, "Tropical depression",
+                                 ifelse(Maximum.Wind.kph %in% 63:118, "Tropical storm",
                                         ifelse(Maximum.Wind.kph %in% 119:153, "1",
                                                ifelse(Maximum.Wind.kph %in% 154:177, "2",
                                                       ifelse(Maximum.Wind.kph %in% 178:208, "3",
@@ -106,11 +106,13 @@ dd[c("ID",
      "Year",
      "ID.plus",
      "Status",
-     "Ocean")] = lapply(dd[c("ID", 
-                             "Year",
-                             "ID.plus",
-                             "Status",
-                             "Ocean")], as.factor)
+     "Ocean",
+     "Saffir.Simpson")] = lapply(dd[c("ID", 
+                                      "Year",
+                                      "ID.plus",
+                                      "Status",
+                                      "Ocean",
+                                      "Saffir.Simpson")], as.factor)
 ```
 
 
