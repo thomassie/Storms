@@ -8,34 +8,13 @@ output:
 ---
 
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 
-```{r include = FALSE}
-rm(list=ls())
-```
 
 
-```{r include = FALSE}
-# Load libraries.
-library(repmis)
-library(tidyverse)
-library(ggplot2)
-library(ggExtra)
-library(lubridate)
-library(scales)
-library(chron)
-library(ggmap)
-library(sp)
-library(leaflet)
-library(maps)
-library(maptools)
-library(cowplot)
-library(RColorBrewer)
-library(ggpubr)
-```
+
+
+
 
 
 # Storm data analysis
@@ -44,9 +23,15 @@ library(ggpubr)
 
 ## Loading the dataset
 
-```{r message = FALSE}
+
+```r
 # Entire workspace.
 source_data("https://github.com/thomassie/Storms/blob/master/Data/StormDataWS.RData?raw=true")
+```
+
+```
+## [1] ".Random.seed" "dd.pacific"   "i"            "dd"          
+## [5] "n"            "dd.atlantic"  "dd.i"         "dd.org"
 ```
 
 
@@ -54,7 +39,8 @@ source_data("https://github.com/thomassie/Storms/blob/master/Data/StormDataWS.RD
 ## Exploring the dataset
 
 First, I generate two dataset that include a couple of summary statistics such as minimum pressure or maximum duration for each **storm**...
-```{r}
+
+```r
 # Some summary statistics to see which was the strongest storm etc.
 dd.sum <- dd %>%
   group_by(ID) %>%
@@ -71,8 +57,23 @@ dd.sum <- dd %>%
 str(dd.sum)
 ```
 
+```
+## Classes 'tbl_df', 'tbl' and 'data.frame':	2845 obs. of  10 variables:
+##  $ ID               : Factor w/ 2845 levels "AL011851","AL011852",..: 1 165 328 491 653 808 2 166 329 492 ...
+##  $ Name             : chr  "UNNAMED" "UNNAMED" "UNNAMED" "UNNAMED" ...
+##  $ ID.plus          : Factor w/ 2845 levels "ABBY (AL011968)",..: 1562 1688 1809 1926 2038 2145 1563 1689 1810 1927 ...
+##  $ Year             : Factor w/ 165 levels "1851","1852",..: 1 1 1 1 1 1 2 2 2 2 ...
+##  $ Min.Pressure     : num  Inf Inf Inf Inf Inf ...
+##  $ Max.Duration     : num  3 0 0 11.75 3.75 ...
+##  $ Mean.Strength.kph: num  98 129 80 105 80 85 118 93 108 117 ...
+##  $ Max.Strength.kph : num  129 129 80 161 80 97 161 113 113 129 ...
+##  $ Storm.Start      : chr  "25/06 00:00:00" "05/07 12:00:00" "10/07 12:00:00" "16/08 00:00:00" ...
+##  $ Storm.Stop       : chr  "28/06 00:00:00" "05/07 12:00:00" "10/07 12:00:00" "27/08 18:00:00" ...
+```
+
 ...and for each **year**. I will use teh latter dataset mainly for mapping (see blow).
-```{r}
+
+```r
 dd.sum.year <- dd %>%
   group_by(Year) %>%
   summarise(DateTime.new = first(DateTime.new),
@@ -87,7 +88,8 @@ dd.sum.year <- dd %>%
 
 
 But first, I have to assign the exact dates and times for these annual extreme values.
-```{r}
+
+```r
 # Get exact date and time for all extreme values!
 p.min <- rep(NA, length(unique(dd$Year)))
 d.max <- p.min
@@ -112,9 +114,24 @@ dd.sum.year <- dd.sum.year %>%
 str(dd.sum.year)
 ```
 
+```
+## Classes 'tbl_df', 'tbl' and 'data.frame':	165 obs. of  10 variables:
+##  $ Year             : Factor w/ 165 levels "1851","1852",..: 1 2 3 4 5 6 7 8 9 10 ...
+##  $ DateTime.new     : POSIXct, format: "1851-06-25 00:00:00" "1852-08-19 00:00:00" ...
+##  $ Min.Pressure     : num  Inf 961 924 938 997 ...
+##  $ Max.Duration     : num  11.75 11 11.75 5.75 3.75 ...
+##  $ Mean.Strength.kph: num  96 117 135 114 115 111 107 116 119 113 ...
+##  $ Max.Strength.kph : num  161 161 209 177 177 209 145 145 177 177 ...
+##  $ Items            : int  98 134 100 60 35 95 104 86 97 122 ...
+##  $ DateTime.p       : POSIXct, format: NA "1852-08-26 06:00:00" ...
+##  $ DateTime.d       : POSIXct, format: "1851-08-27 18:00:00" "1852-08-30 00:00:00" ...
+##  $ DateTime.w       : POSIXct, format: "1851-08-23 00:00:00" "1852-08-24 00:00:00" ...
+```
+
 
 Then I introduce a couple of choices to get a nice ranking and to narrow the data down to a specific time period.
-```{r}
+
+```r
 # The first 'n.select' storms are selected for ranking
 n.select <- 20
 # Time window: from 'year.min' to 'year.max'. 
@@ -125,7 +142,8 @@ year.max <- 2015
 
 
 But at first, we will have a glimpse at the rankings comming from the **entire** data.
-```{r}
+
+```r
 # Ranking according to...
 # ...longest duration (enire data set).
 topn.Duration       <- arrange(dd.sum, desc(dd.sum$Max.Duration))[1:n.select,] %>%
@@ -150,7 +168,8 @@ topn.Pressure.Min$ID.plus <- factor(topn.Pressure.Min$ID.plus,
 
 
 I generate three barplots, one for each criterion...
-```{r}
+
+```r
 # Barplot for durations.
 plot.dur <- topn.Duration %>%
   ggplot(aes(x = ID.plus,
@@ -230,14 +249,18 @@ plot.pres <- topn.Pressure.Min %>%
 
 
 ...which are ten put together in a single figure. We can now have a look at the 20 storms that lasted the longest (**A**), showed the highest maximum wind speed (**B**), and the lowest minimum pressure (**C**). (I know that one can argue about cuttig the scale here. However, no storm will ever reach 0 hPa, and therefore, I introduced this 'baseline'.)  
-```{r fig.height = 7, fig.width = 12, message = FALSE, warning = FALSE}
+
+```r
 plot_grid(plot.dur, plot.wind, plot.pres + remove("x.text"), 
           labels = c("A", "B", "C"),
           ncol = 3, nrow = 1)
 ```
 
+![](StormDataAnalysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
 Rankings are a nice way to get an idea about the top of the pops. However, a lot of data is neglected and, hence, one misses a lot of information, too. Here is another way of visualising the storm data: each point represents a measure of minimum pressure (in hPa or mbar).
-```{r messages = FALSE, warning = FALSE}
+
+```r
 # A bar chart counting observations.
 plot.pressure.bar.x <- dd.sum.year %>%
   ggplot(aes(x = as.numeric(as.character(Year)),
@@ -279,7 +302,18 @@ plot.pressure.main <- ggplot(data = dd,
   #             colour = "#F93A2E",
   #             alpha = 0.9,
   #             size = 1.2) +
- geom_point(data = dd.sum.year,
+  geom_smooth(data = dd.sum.year,
+              # geom_smooth(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
+              aes(x = DateTime.p,
+                  y = Min.Pressure),
+              method = "lm",
+              se = FALSE,
+              span = 0.2,
+              # linetype = "dashed",
+              colour = "#DF636A",
+              alpha = 0.9,
+              size = 0.8) +
+  geom_point(data = dd.sum.year,
              # geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
              aes(x = DateTime.p,
                  y = Min.Pressure),
@@ -291,19 +325,8 @@ plot.pressure.main <- ggplot(data = dd,
             aes(x = (DateTime.p),
                 y = Min.Pressure),
             size = 0.3,
-            alpha = 0.5,
+            alpha = 0.9,
             colour = "#333333") +
-   geom_smooth(data = dd.sum.year,
-              # geom_smooth(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
-              aes(x = DateTime.p,
-                  y = Min.Pressure),
-              method = "lm",
-              se = FALSE,
-              span = 0.2,
-              # linetype = "dashed",
-              colour = "#DF636A",
-              alpha = 0.9,
-              size = 0.8) +
   theme_bw() +
   geom_rug(alpha = 0.02,
            colour = "#999999") +
@@ -337,13 +360,16 @@ plot.pressure.dens.y <- axis_canvas(plot.pressure.main, axis = "y", coord_flip =
 ```
 
 Now, one can combine all three plots to a single figure.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+
+```r
 plot.pressure.1 <- insert_xaxis_grob(plot.pressure.main, plot.pressure.dens.x, grid::unit(0.2, "null"), 
                                      position = "top")
 plot.pressure.2 <- insert_yaxis_grob(plot.pressure.1, plot.pressure.dens.y, grid::unit(.2, "null"), 
                                      position = "right")
 ggdraw(plot.pressure.2)
 ```
+
+![](StormDataAnalysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 One can see here a couple of things, of which some are described in the datset info provided [here](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf):
 
@@ -353,72 +379,11 @@ One can see here a couple of things, of which some are described in the datset i
 
 
 Now I select specific parts of the prepared dataset according to the choices I made above.
-```{r warning = FALSE, echo = FALSE, include = FALSE}
-# All storms between 'year.min' and 'year.max'. 
-dd.select <- dd %>% 
-  filter(year.min <= year(Date.new) & year(Date.new) <= year.max)
 
-# The summary statistics for the selected data.
-dd.select.sum <- dd.sum %>%
-  filter(ID %in% dd.select$ID)
-
-# Longest duration (selection).
-topn.select.Duration      <- arrange(dd.select.sum, desc(dd.select.sum$Max.Duration))[1:n.select,]
-# Strongest wind recorded (selection)
-topn.select.Strength.Max  <- arrange(dd.select.sum, desc(dd.select.sum$Max.Strength.kph))[1:n.select,]
-# Lowest pressure (selection)
-topn.select.Lowest.       <- arrange(dd.select.sum, -desc(dd.select.sum$Max.Strength.kph))[1:n.select,]
-# Minimum pressure (selection)
-topn.select.Pressure.Min  <- arrange(dd.select.sum, -desc(dd.select.sum$Min.Pressure))[1:n.select,]
-```
 
 
 Let's have a look at these storms. First, I want to see which are the storms that lasted the longest. (I use a dataset called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
-```{r warning = FALSE, include = FALSE}
-dd.s <- topn.Duration
 
-# Create an indicator for grouping.
-groups = as.character(unique(dd.s$ID.plus))
-
-# The basic map.
-map = leaflet(dd.s) %>% 
-  # addProviderTiles(providers$CartoDB.Positron)
-  # addProviderTiles(providers$Esri.WorldTerrain)
-  addProviderTiles(providers$CartoDB.DarkMatter)
-
-# Colors of a specific palette assigned to 'Maximum.Wind'.
-groupColors = colorNumeric(palette = "YlOrRd", domain = dd.s$Maximum.Wind.kph)
-
-# Grouping!
-for (g in groups) {
-  d = dd[dd$ID.plus == g, ]
-  map = map %>% 
-    addPolylines(data = d,
-                 color = "#788E95",
-                 group = g,
-                 lng = ~ Longitude,
-                 lat = ~ Latitude,
-                 weight = 0.6,
-                 opacity = 0.6) %>%
-    addCircleMarkers(data = d,
-                     group = g,
-                     lng = ~Longitude, 
-                     lat = ~Latitude, 
-                     color = ~groupColors(Maximum.Wind.kph),
-                     weight = 2,
-                     # fill = FALSE,
-                     radius = ~(Maximum.Wind^1.2)/50,
-                     # radius = ~sqrt(Maximum.Wind)*2,
-                     popup = paste("Name: ", d$Name, "<br>",
-                                   "Date: ", d$Date.new, "<br>",
-                                   "Time: ", d$Time.new, "<br>",
-                                   "Status: ", d$Status, "<br>",
-                                   "Maximum wind speed: ", d$Maximum.Wind.kph, "km/h", "<br>"))
-}
-
-map %>%
-  addLayersControl(overlayGroups = groups)
-```
 
 
 

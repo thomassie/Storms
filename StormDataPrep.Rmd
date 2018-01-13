@@ -34,7 +34,8 @@ library(sp)
 
 ## Loading the data
 
-I downloaded the data sets from NOAA's [National Hurricane Center](http://www.nhc.noaa.gov/data/#hurdat), one for hurricanes and one for typhoons, and stored them in my respective GitHub repository. Data format is the revised Atlantic hurricane database (HURDAT2, see [here](http://www.aoml.noaa.gov/hrd/hurdat/Data_Storm.html) for details).  
+I downloaded the data sets from NOAA's [National Hurricane Center](http://www.nhc.noaa.gov/data/#hurdat), one for hurricanes and one for typhoons, and stored them in my respective GitHub repository. Data format is the revised Atlantic hurricane database (HURDAT2, see [here](http://www.aoml.noaa.gov/hrd/hurdat/Data_Storm.html) for details). You want to have a look at the decription that is provided [here](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf).  
+
 Now, to start I will load both data sets from my repository, and add a variable that indicates the respective ocean it belongs to.
 ```{r echo = TRUE, message = FALSE}
 dd.atlantic <- read_csv("https://raw.githubusercontent.com/thomassie/Storms/master/Data/atlantic.csv?token=AFYWCm0CTFVvcnJCMs2F3z0u0Ce_ditGks5aXIiEwA%3D%3D") %>%
@@ -43,15 +44,18 @@ dd.pacific  <- read_csv("https://raw.githubusercontent.com/thomassie/Storms/mast
   mutate(Ocean = "pacific")
 ```
 
+
 This is what the original Atlantic data looks like:
 ```{r echo = FALSE}
 str(dd.atlantic)
 ```
 
+
 ...and the data from the Pacific:
 ```{r echo = FALSE}
 str(dd.pacific)
 ```
+
 
 I combine both data sets to a single one, and remove spaces in variable names by '.'.
 ```{r}
@@ -69,7 +73,7 @@ Next, I make some adjustments but leave the original variables as they were (for
 - One important step is making new date, time, and datetime variables. 
 - Also, wind speed is converted into the metric system (km per hour). 
 - Further, I included a variable named 'Duration' which will come into play at a latter point when the duration of a storm is calculated. 
-- And last, there are some inconsistencies in the data: Generally, when there is no data availabe for pressure cells were filled with '-999'. However, sometimes it is '-99' or odd entries. To make it homogeneous and to avoid trouble when using the values in calculation, I changed all these entries to 'NA'.
+- Alao, there are some inconsistencies in the data: Generally, when there is no data availabe for pressure cells were filled with '-999'. However, sometimes it is '-99' or odd entries (at least to me). But, it is all explained in the [info](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf). To make it homogeneous and to avoid trouble when using the values in calculations, I changed all these entries to 'NA'.
 ```{r}
 dd <- dd.org %>%
   mutate(Date.new = as.Date(as.character(Date), "%Y%m%d")) %>%
@@ -84,9 +88,17 @@ dd <- dd.org %>%
   # For some storms there's no data about wind speeds.
   # Hence, these are removed here.
   filter(Maximum.Wind >= 0) %>%
-  mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, NA))
-# mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, -999)) 
+  mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, NA)) %>%
+  # mutate(Minimum.Pressure = ifelse(Minimum.Pressure > 500, Minimum.Pressure, -999)) 
+  # Add a variable for Saffir-Simpson scale and assign respective values.
+  mutate(Saffir.Simpson = ifelse(Maximum.Wind.kph %in% 0:62, "Tropical.Depression",
+                                 ifelse(Maximum.Wind.kph %in% 63:118, "Tropical.Storm",
+                                        ifelse(Maximum.Wind.kph %in% 119:153, "1",
+                                               ifelse(Maximum.Wind.kph %in% 154:177, "2",
+                                                      ifelse(Maximum.Wind.kph %in% 178:208, "3",
+                                                             ifelse(Maximum.Wind.kph %in% 209:251, "4", "5")))))))
 ```
+
 
 Then, for some variables it makes more sense if they are declared as factors.
 ```{r}
@@ -114,7 +126,7 @@ dd$Longitude <- as.numeric(dd$Longitude)
 ```
 
 
-Finally, as announced previuously, the duration of a storm is calculated.
+Next, as announced previuously, the duration of a storm is calculated.
 ```{r}
 # ids <- as.character(unique(dd$ID))
 for (i in as.character(unique(dd$ID))) {
@@ -126,6 +138,7 @@ for (i in as.character(unique(dd$ID))) {
   dd$Duration[which(dd$ID %in% i)] <- dd.i$Duration
 }
 ```
+
 
 There you go! 
 ```{r echo = FALSE}
