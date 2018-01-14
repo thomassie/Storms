@@ -73,7 +73,7 @@ Next, I make some adjustments but leave the original variables as they were (for
 - One important step is making new date, time, and datetime variables. 
 - Also, wind speed is converted into the metric system (km per hour). 
 - Further, I included a variable named 'Duration' which will come into play at a latter point when the duration of a storm is calculated. 
-- Alao, there are some inconsistencies in the data: Generally, when there is no data availabe for pressure cells were filled with '-999'. However, sometimes it is '-99' or odd entries (at least to me). But, it is all explained in the [info](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf). To make it homogeneous and to avoid trouble when using the values in calculations, I changed all these entries to 'NA'.
+- Also, there are some inconsistencies in the data: Generally, when there is no data availabe for pressure cells were filled with '-999'. However, sometimes it is '-99' or odd entries (at least to me). But, it is all explained in the [info](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf). To make it homogeneous and to avoid trouble when using the values in calculations, I changed all these entries to 'NA'.
 ```{r}
 dd <- dd.org %>%
   mutate(Date.new = as.Date(as.character(Date), "%Y%m%d")) %>%
