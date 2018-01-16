@@ -104,6 +104,7 @@ dd.sum.year <- dd %>%
             MaxDuration = max(Duration, na.rm = TRUE),
             MeanWindKPH = round(mean(WindKPH, 0)),
             MaxWindKPH = max(WindKPH, na.rm = TRUE),
+            NumStorms = length(unique(Key)),
             Items = length(Pressure)) %>%
   arrange(-desc(Year))
 ```
@@ -204,7 +205,8 @@ plot.dur <- topn.Duration %>%
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
   coord_flip() +
-  scale_x_discrete(limits = rev(levels(topn.Duration$KeyPlus)))
+  scale_x_discrete(limits = rev(levels(topn.Duration$KeyPlus))) +
+  rremove("legend")
 
 # Barplot for wind speed.
 plot.wind <- topn.WindKPH.Max %>%
@@ -228,7 +230,8 @@ plot.wind <- topn.WindKPH.Max %>%
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
   coord_flip() +
-  scale_x_discrete(limits = rev(levels(topn.WindKPH.Max$KeyPlus)))
+  scale_x_discrete(limits = rev(levels(topn.WindKPH.Max$KeyPlus))) +
+  rremove("legend")
 
 # Barplot for pressure.
 plot.pres <- topn.Pressure.Min %>%
@@ -249,10 +252,13 @@ plot.pres <- topn.Pressure.Min %>%
             position = position_dodge(width = 0.1),
             hjust = 1.5,
             vjust = 0.5) +
-  scale_y_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0),
+                     limits = c(800, max(topn.Pressure.Min$MinPressure)),
+                     oob = rescale_none) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
-  coord_cartesian(ylim = c(800, max(topn.Pressure.Min$MinPressure))) +
+  # coord_cartesian(ylim = c(800, max(topn.Pressure.Min$MinPressure))) +
   scale_x_discrete(limits = rev(levels(topn.Pressure.Min$KeyPlus))) +
+  rremove("legend") +
   coord_flip() 
 ```
 
@@ -271,7 +277,7 @@ plot.pressure.main <- ggplot(data = dd,
                              aes(x = DateTime,
                                  y = Pressure)) +
   geom_point(aes(colour = Ocean),
-             alpha = 0.3,
+             alpha = 0.1,
              size = 0.3) +
   geom_point(data = dd.sum.year,
              # geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
@@ -304,7 +310,7 @@ plot.pressure.main <- ggplot(data = dd,
   labs(x = "Year", 
        y = "Minimum in central pressure (mbar)",
        title = "Do extreme events become more severe?",
-       subtitle = "Storm intensity indicated by minimum in central pressure.",
+       subtitle = expression("Storm intensity indicated by minimum in central pressure. \nThe lower the pressure the more intense the storm."),
        caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
@@ -312,8 +318,8 @@ plot.pressure.main <- ggplot(data = dd,
         axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
-        plot.title = element_text(face = "bold", hjust = 0, vjust = -1, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -1, colour = "#3C3C3C", size = 11),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = -5, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.5, vjust = -0.05, colour = "#7F8182"),
         panel.background = element_rect(fill = "#F0F0F0"),
         panel.border = element_blank(),
@@ -326,17 +332,10 @@ plot.pressure.main <- ggplot(data = dd,
         legend.background = element_blank(),
         legend.key = element_blank()) +
   # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
-  labs(x = "Year", 
-       y = "Minimum in central pressure (mbar)",
-       title = "Do extreme events become more severe?",
-       subtitle = "Storm intensity indicated by minimum in central pressure.",
-       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   # ggpubr::color_palette("jco") +
   # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
   scale_colour_manual(values = c("#FF281E", "#0090CF")) +
   rremove("legend")
-# title = paste("Minimum pressure recorded for years", year.min, "to", year.max))
-# ggtitle(paste("Minimum pressure recorded for years", year.min, "to", year.max))
 
 # A density plot on top of the main plot.
 # TREAT the date.time AS NUMERIC!!!
@@ -358,9 +357,13 @@ plot.pressure.dens.y <- axis_canvas(plot.pressure.main, axis = "y", coord_flip =
 
 Now, one can combine all three plots to a single figure.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-plot.pressure.1 <- insert_xaxis_grob(plot.pressure.main, plot.pressure.dens.x, grid::unit(0.2, "null"), 
+plot.pressure.1 <- insert_xaxis_grob(plot.pressure.main, 
+                                     plot.pressure.dens.x, 
+                                     grid::unit(0.2, "null"), 
                                      position = "top")
-plot.pressure.2 <- insert_yaxis_grob(plot.pressure.1, plot.pressure.dens.y, grid::unit(.2, "null"), 
+plot.pressure.2 <- insert_yaxis_grob(plot.pressure.1, 
+                                     plot.pressure.dens.y, 
+                                     grid::unit(.2, "null"), 
                                      position = "right")
 ggdraw(plot.pressure.2)
 ```
@@ -372,7 +375,7 @@ plot.wind.main <- ggplot(data = dd,
                          aes(x = DateTime,
                              y = WindKPH)) +
   geom_point(aes(colour = Ocean),
-             alpha = 0.3,
+             alpha = 0.1,
              size = 0.3) +
   geom_point(data = dd.sum.year,
              # geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
@@ -402,13 +405,18 @@ plot.wind.main <- ggplot(data = dd,
   theme_bw() +
   geom_rug(alpha = 0.02,
            colour = "#999999") +
+  labs(x = "Year", 
+       y = "Maximum wind speed (km/h)",
+       title = "Do extreme events become more severe?",
+       subtitle = expression("Storm intensity indicated by maximum wind speed."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
-        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
         axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
-        plot.title = element_text(face = "bold", hjust = 0, vjust = -1, colour = "#3C3C3C", size = 20),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
         plot.subtitle = element_text(hjust = 0, vjust = -1, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.5, vjust = -0.05, colour = "#7F8182"),
         panel.background = element_rect(fill = "#F0F0F0"),
@@ -416,12 +424,12 @@ plot.wind.main <- ggplot(data = dd,
         plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_text(size=12, color = "Ocean", face="bold"),
+        legend.justification=c(0,1), 
+        legend.position=c(0.05, 0.95),
+        legend.background = element_blank(),
+        legend.key = element_blank()) +
   # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
-  labs(x = "Year", 
-       y = "Maximum wind speed (km/h)",
-       title = "Do extreme events become more severe?",
-       subtitle = "Storm intensity indicated by maximum wind speed.",
-       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   # ggpubr::color_palette("jco") +
   # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
   scale_colour_manual(values = c("#FF281E", "#0090CF")) +
@@ -449,15 +457,16 @@ plot.wind.dens.y <- axis_canvas(plot.wind.main, axis = "y", coord_flip = TRUE) +
 
 Now, one can combine all three plots to a single figure.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-plot.wind.1 <- insert_xaxis_grob(plot.wind.main, plot.wind.dens.x, grid::unit(0.2, "null"), 
+plot.wind.1 <- insert_xaxis_grob(plot.wind.main, 
+                                 plot.wind.dens.x, 
+                                 grid::unit(0.2, "null"), 
                                  position = "top")
-plot.wind.2 <- insert_yaxis_grob(plot.wind.1, plot.wind.dens.y, grid::unit(.2, "null"), 
+plot.wind.2 <- insert_yaxis_grob(plot.wind.1, 
+                                 plot.wind.dens.y, 
+                                 grid::unit(.2, "null"), 
                                  position = "right")
 ggdraw(plot.wind.2)
 ```
-
-
-
 
 
 
@@ -492,7 +501,7 @@ topn.select.Pressure.Min  <- arrange(dd.select.sum, -desc(dd.select.sum$MinPress
 ```
 
 
-Let's have a look at these storms. First, I want to see which are the storms that lasted the longest. (I use a data set called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
+Let's have a look at these storms. First, I want to see which are the storms that lasted the longest and where they ocurred. (I use a data set called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
 ```{r warning = FALSE, message = FALSE}
 # What to show...?
 dd.s <- topn.Duration
@@ -513,7 +522,7 @@ groupColors = colorNumeric(palette = "YlOrRd", domain = dd.s$MaxWindKPH)
 # Grouping!
 for (g in groups) {
   d = dd[dd$KeyPlus == g, ]
- 
+  
   map = map %>% 
     addPolylines(data = d,
                  color = "#788E95",
@@ -544,50 +553,9 @@ map %>%
 ```
 
 
-
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-dd.HU <- filter(dd, Status == "HU")
 dd.345 <- filter(dd, SaffirSimpson == "3" | SaffirSimpson == "4" | SaffirSimpson == "5")
 
-ggplot(data = dd.345,
-       aes(x = DateTime,
-           y = WindKPH)) +
-  geom_hline(yintercept = 209) +
-  geom_point(aes(size = (WindKPH^1.2)/50,
-                 colour = WindKPH),
-             alpha = 0.5) +
-  theme(axis.text = element_text(family = "Varela Round", size = 10),
-        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
-        axis.ticks.length = unit(5, "mm"),
-        axis.line = element_blank(),
-        panel.background = element_rect(fill = "#F0F0F0"),
-        panel.border = element_blank(),
-        plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
-        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) 
-```
-
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-ggplot(data = dd.345,
-       aes(x = DateTime,
-           y = Pressure)) +
-  # geom_hline(yintercept = 209) +
-  geom_point(aes(size = (WindKPH^1.2)/50,
-                 colour = SaffirSimpson),
-             alpha = 0.3) +
-  scale_colour_manual(values = c("#B3B747", "#A98EA3", "#D49B3D")) +
-  theme(axis.text = element_text(family = "Varela Round", size = 10),
-        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
-        axis.ticks.length = unit(5, "mm"),
-        axis.line = element_blank(),
-        panel.background = element_rect(fill = "#F0F0F0"),
-        panel.border = element_blank(),
-        plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
-        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) 
-```
-
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 ggplot(data = dd.345,
        aes(x = DateTime,
            y = Pressure)) +
@@ -642,33 +610,96 @@ ggplot(data = dd.345,
         panel.border = element_blank(),
         plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) 
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2))
+
+rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
 ```
 
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-ggplot(data = dd,
-       aes(x = DateTimeSameYear,
-           y = Pressure)) + 
+plot.pressure.year.main <- ggplot(data = dd,
+                                  aes(x = DateTimeSameYear,
+                                      y = Pressure)) + 
   geom_point(aes(colour = Ocean),
              size = 0.8,
              alpha = 0.1) +
-  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
   # geom_smooth(method = "lm",
   #             color = "#333333") +
-  labs(x = "Time in year", 
-       y = "Pressure (mbar)") +
-  theme(axis.text = element_text(family = "Varela Round", size = 10),
+  labs(x = "Month", 
+       y = "Minimum central pressure (mbar)",
+       title = "When do hurricans and typhoons occur?",
+       subtitle = expression("Minimum pressure records and when \nthese occured during year."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
         axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
-        panel.background = element_rect(fill = "#F0F0F0"),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#F1EDE2"),
         panel.border = element_blank(),
-        plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
+        plot.background = element_rect(fill = "#F1EDE2", colour = "#F1EDE2"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) 
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_blank(),
+        legend.justification=c(0,1),
+        legend.position=c(0.1, 0.34),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(colour = c("#FF281E", "#0090CF"),
+                                   size = 10)) +
+  # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
+  # ggpubr::color_palette("jco") +
+  # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  # rremove("legend") +
+  scale_x_datetime(labels = date_format("%b"),
+                   date_breaks = "month",
+                   limits = c(min(dd$DateTimeSameYear), max(dd$DateTimeSameYear)))
+
+# A density plot on top of the main plot.
+# TREAT the date.time AS NUMERIC!!!
+plot.pressure.year.dens.x <- axis_canvas(plot.pressure.year.main, axis = "x") + 
+  geom_density(data = dd, aes(x = as.numeric(DateTimeSameYear), fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  # ggpubr::color_palette("jco")
+  # scale_fill_manual(values = c("#B78A3F", "#58758C"))
+  scale_fill_manual(values = c("#FF281E", "#0090CF"))
+
+# ...and one on the right site.
+plot.pressure.year.dens.y <- axis_canvas(plot.pressure.year.main, axis = "y", coord_flip = TRUE) +
+  geom_density(data = dd, aes(x = as.numeric(Pressure), fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  # ggpubr::color_palette("jco") +
+  # scale_fill_manual(values = c("#B78A3F", "#58758C")) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
+  coord_flip()
+```
+
+Now, one can combine all three plots to a single figure.
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+plot.pressure.year.1 <- insert_xaxis_grob(plot.pressure.year.main, 
+                                          plot.pressure.year.dens.x, 
+                                          grid::unit(0.2, "null"), 
+                                          position = "top")
+plot.pressure.year.2 <- insert_yaxis_grob(plot.pressure.year.1, 
+                                          plot.pressure.year.dens.y, 
+                                          grid::unit(.2, "null"), 
+                                          position = "right")
+ggdraw(plot.pressure.year.2)
 ```
 
 
+
+
+
+
+
+```{r}
+
+```
 
 
 
