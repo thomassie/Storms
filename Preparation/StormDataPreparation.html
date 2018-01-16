@@ -163,7 +163,15 @@ str(dd.org)</code></pre>
 ##  $ SW64    : int  NA NA NA NA NA NA NA NA NA NA ...
 ##  $ NW64    : int  NA NA NA NA NA NA NA NA NA NA ...
 ##  $ Ocean   : chr  &quot;atlantic&quot; &quot;atlantic&quot; &quot;atlantic&quot; &quot;atlantic&quot; ...</code></pre>
-<p>Next, I make a couple of adjustments so that the data set matches my needs for analysis.</p>
+<p>Next, I make a couple of adjustments so that the data set matches my needs for analysis:</p>
+<ul>
+<li><em>Year</em>: to summarise/describe data by year.</li>
+<li><em>DateTimeSameYear</em>: when you only want to explore seasonal occurances.</li>
+<li><em>Duration</em>: giving amount of time s storm lasted.</li>
+<li><em>WindKPH</em>: wind speed in km per hour.</li>
+<li><em>KeyPlus</em>: a combination of <em>Key</em> and <em>Name</em>.</li>
+<li><em>SaffirSimpson</em>: assigning storms a value on the <a href="https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale">Saffir-Simpson scale</a>.</li>
+</ul>
 <pre class="r"><code>dd &lt;- dd.org %&gt;%
   mutate(Year = year(DateTime),
          DateTimeSameYear = as.POSIXct(strptime(format(DateTime, &quot;%m/%d %H:%M:%S&quot;), &quot;%m/%d %H:%M:%S&quot;)),

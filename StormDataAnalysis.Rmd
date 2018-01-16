@@ -443,7 +443,6 @@ for (g in groups) {
                      group = g,
                      lng = ~Longitude, 
                      lat = ~Latitude, 
-                     # color = ~groupColors(Maximum.Wind.kph),
                      color = ~groupColors(Saffir.Simpson),
                      weight = 2,
                      # fill = FALSE,

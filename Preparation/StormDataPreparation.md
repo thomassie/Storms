@@ -69,7 +69,14 @@ str(dd.org)
 ##  $ Ocean   : chr  "atlantic" "atlantic" "atlantic" "atlantic" ...
 ```
 
-Next, I make a couple of adjustments so that the data set matches my needs for analysis.
+Next, I make a couple of adjustments so that the data set matches my needs for analysis:
+
+  - *Year*: to summarise/describe data by year.
+  - *DateTimeSameYear*: when you only want to explore seasonal occurances.
+  - *Duration*: giving amount of time s storm lasted.
+  - *WindKPH*: wind speed in km per hour.
+  - *KeyPlus*: a combination of *Key* and *Name*.
+  - *SaffirSimpson*: assigning storms a value on the [Saffir-Simpson scale](https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale).
 
 ```r
 dd <- dd.org %>%

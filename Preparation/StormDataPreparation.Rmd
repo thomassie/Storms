@@ -53,7 +53,14 @@ dd.org <- bind_rows(dd.atlantic, dd.pacific)
 str(dd.org)
 ```
 
-Next, I make a couple of adjustments so that the data set matches my needs for analysis.
+Next, I make a couple of adjustments so that the data set matches my needs for analysis:
+
+  - *Year*: to summarise/describe data by year.
+  - *DateTimeSameYear*: when you only want to explore seasonal occurances.
+  - *Duration*: giving amount of time s storm lasted.
+  - *WindKPH*: wind speed in km per hour.
+  - *KeyPlus*: a combination of *Key* and *Name*.
+  - *SaffirSimpson*: assigning storms a value on the [Saffir-Simpson scale](https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale).
 ```{r}
 dd <- dd.org %>%
   mutate(Year = year(DateTime),
@@ -67,6 +74,11 @@ dd <- dd.org %>%
                                               ifelse(WindKPH %in% 154:177, "2",
                                                      ifelse(WindKPH %in% 178:208, "3",
                                                             ifelse(WindKPH %in% 209:251, "4", "5")))))))
+```
+
+There is one manipulation that is critical for plotting (at least) with [Leaflet for R](https://rstudio.github.io/leaflet/): All longitude values have to be positive. Otherwise Leaflet gets confused and the data "jumps" by 360\degree.
+```{r}
+dd$Lon <- ifelse(dd$Lon < 0, dd$Lon + 360, dd$Lon)
 ```
 
 Then, for some variables it makes more sense if they are declared as factors.
