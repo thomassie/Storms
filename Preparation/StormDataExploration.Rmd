@@ -2,8 +2,11 @@
 title: "StormDataExploration"
 author: "Thomas M. Massie"
 date: "14 1 2018"
-output: html_document
+output: 
+  html_document: 
+    keep_md: true
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -267,6 +270,7 @@ plot.pres <- topn.Pressure.Min %>%
 ```{r fig.height = 7, fig.width = 12, message = FALSE, warning = FALSE}
 plot_grid(plot.dur, plot.wind, plot.pres + remove("x.text"), 
           labels = c("A", "B", "C"),
+          label_colour = "#3C3C3C",
           ncol = 3, nrow = 1)
 ```
 
@@ -326,16 +330,16 @@ plot.pressure.main <- ggplot(data = dd,
         plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
-  theme(legend.title = element_text(size=10, color = "Ocean", face="bold"),
+  theme(legend.title = element_blank(),
         legend.justification=c(0,1), 
-        legend.position=c(0.05, 0.95),
+        legend.position=c(1.02, 0.3),
         legend.background = element_blank(),
         legend.key = element_blank()) +
   # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
   # ggpubr::color_palette("jco") +
   # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
   scale_colour_manual(values = c("#FF281E", "#0090CF")) +
-  rremove("legend")
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) 
 
 # A density plot on top of the main plot.
 # TREAT the date.time AS NUMERIC!!!
@@ -419,21 +423,21 @@ plot.wind.main <- ggplot(data = dd,
         plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
         plot.subtitle = element_text(hjust = 0, vjust = -1, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.5, vjust = -0.05, colour = "#7F8182"),
-        panel.background = element_rect(fill = "#F0F0F0"),
+        panel.background = element_rect(fill = "#F1EDE2"),
         panel.border = element_blank(),
-        plot.background = element_rect(fill = "#F0F0F0", colour = "#F0F0F0"),
+        plot.background = element_rect(fill = "#F1EDE2", colour = "#F1EDE2"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
-  theme(legend.title = element_text(size=12, color = "Ocean", face="bold"),
+  theme(legend.title = element_blank(),
         legend.justification=c(0,1), 
-        legend.position=c(0.05, 0.95),
+        legend.position=c(1.0, 0.95),
         legend.background = element_blank(),
         legend.key = element_blank()) +
   # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
   # ggpubr::color_palette("jco") +
   # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
   scale_colour_manual(values = c("#FF281E", "#0090CF")) +
-  rremove("legend")
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
 # title = paste("Minimum pressure recorded for years", year.min, "to", year.max))
 # ggtitle(paste("Minimum pressure recorded for years", year.min, "to", year.max))
 
