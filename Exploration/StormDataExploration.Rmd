@@ -659,7 +659,7 @@ ggplot(data = dd,
 ```
 
 
-Not bad, but the residuals (data - fit) seem to show some [heteroskedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity).  Maybe the relationship can be better described by a negativ quadratic fit...?
+Not bad, but the residuals (data - fit) seem to show some [heteroskedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity).  Maybe the relationship can be better described by another fit...?
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
 # ggplot(data = dd.345,
