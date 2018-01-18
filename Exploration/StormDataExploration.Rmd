@@ -63,11 +63,11 @@ theme_tmm538 <- function (base_size = 11, base_family = "")
 ```
 
 
-# Storm data analysis
+# Storm data exploration
 
 
 
-## Loading the data set
+## Loading the environment
 
 ```{r message = FALSE}
 # Entire workspace.
@@ -471,19 +471,8 @@ plot.wind.2 <- insert_yaxis_grob(plot.wind.1,
                                  position = "right")
 ggdraw(plot.wind.2)
 ```
-
-
-
-
-
-
-One can see here a couple of things, of which some are described in the datset info provided [here](http://www.aoml.noaa.gov/hrd/hurdat/newhurdat-format.pdf):
-
-* Until the 1950s, there are only sporadic measurements which means that we do not have much information about the storms from the time before. This makes the comparison with the rest of the data a bit dodgy.
-* And again, the number of measurements increased after in the late 1960s (I marked the year 1967). 
-
-
-
+  
+  
 Now I select specific parts of the prepared data set according to the choices I made above.
 ```{r warning = FALSE, echo = FALSE, include = FALSE}
 # All storms between 'year.min' and 'year.max'. 
@@ -556,7 +545,7 @@ for (g in groups) {
 map %>%
   addLayersControl(overlayGroups = groups)
 ```
-
+  
 
 Now, which are the storms that showed the highest wind speeds?
 ```{r warning = FALSE, message = FALSE}
@@ -610,9 +599,9 @@ for (g in groups) {
 map %>%
   addLayersControl(overlayGroups = groups)
 ```
+  
 
-
-It seems that central pressure and 
+It seems that central pressure and wind speed are correlated with each other. How much? I will check for a linear relationship.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
 # ggplot(data = dd.345,
@@ -661,6 +650,67 @@ ggplot(data = dd,
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
   theme(legend.title = element_blank(),
         legend.justification=c(0,1),
+        legend.position=c(0.8, 0.97),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(size = 10, colour = "#3C3C3C")) +
+  # annotate("text", x = 920, y = 310, label = paste("rho = ", round(rho.wind.pres, 2))) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+```
+
+
+Not bad, but the residuals (data - fit) seem to show some [heteroskedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity).  Maybe the relationship can be better described by a negativ quadratic fit...?
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
+# ggplot(data = dd.345,
+#        aes(x = DateTime,
+#            y = Pressure)) +
+#   # geom_hline(yintercept = 209) +
+#   geom_point(aes(size = (WindKPH^1.2)/50,
+#                  colour = ???),
+#              alpha = 0.3) +
+#   scale_colour_manual(values = c("#3F5AA2", "#A4C95D")) +
+#   theme_bw()
+
+ggplot(data = dd,
+       aes(x = Pressure,
+           y = WindKPH)) +
+  # geom_hline(yintercept = 209) +
+  geom_point(aes(colour = Ocean),
+             alpha = 0.4,
+             size = 1.1) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  # geom_smooth(formula = y ~ -x^2,
+  #             color = "#333333") +
+  geom_smooth(method = "lm", 
+              formula = y ~ splines::bs(x, 3),
+              color = "#333333") +
+  # geom_smooth(aes(group = Ocean,
+  #                 colour = Ocean),
+  #             size = 0.5,
+  #             method = "lm") +
+  geom_hline(yintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  labs(x = "Minimum Pressure (hPa)", 
+       y = "Maximum wind speed (km/h)",
+       title = "Strong relationship between wind speed and \ncentral pressure",
+       subtitle = paste( ""),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = -2, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1, vjust = -0.2, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#F1EDE2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#F1EDE2", colour = "#F1EDE2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_blank(),
+        legend.justification=c(0,1),
         legend.position=c(0.8, 0.95),
         legend.background = element_blank(),
         legend.key = element_blank(),
@@ -669,6 +719,8 @@ ggplot(data = dd,
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
+
+When do the storms typicall occur during a year?
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.pressure.year.main <- ggplot(data = dd,
                                   aes(x = DateTimeSameYear,
@@ -699,7 +751,7 @@ plot.pressure.year.main <- ggplot(data = dd,
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
   theme(legend.title = element_blank(),
         legend.justification=c(0,1),
-        legend.position=c(0.1, 0.34),
+        legend.position=c(1.02, 0.3),
         legend.background = element_blank(),
         legend.key = element_blank(),
         legend.text = element_text(size = 10)) +
@@ -743,16 +795,6 @@ plot.pressure.year.2 <- insert_yaxis_grob(plot.pressure.year.1,
                                           grid::unit(.2, "null"), 
                                           position = "right")
 ggdraw(plot.pressure.year.2)
-```
-
-
-
-
-
-
-
-```{r}
-
 ```
 
 
