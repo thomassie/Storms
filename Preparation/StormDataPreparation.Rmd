@@ -78,8 +78,7 @@ dd <- dd.org %>%
 
 There is one manipulation that is critical for plotting (at least) with [Leaflet for R](https://rstudio.github.io/leaflet/): All longitude values have to be positive. Otherwise Leaflet gets confused and the data "jumps" by 360\degree.
 ```{r}
-# dd$Lon <- ifelse(dd$Lon < 0, dd$Lon + 360, dd$Lon)
-dd$Lon <- dd$Lon + 360
+dd$Lon <- ifelse(dd$Lon < 0, dd$Lon + 360, dd$Lon)
 ```
 
 Then, for some variables it makes more sense if they are declared as factors.
