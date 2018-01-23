@@ -742,7 +742,7 @@ plot.pressure.year.main <- ggplot(data = dd,
   labs(x = "Month", 
        y = "Minimum central pressure (mbar)",
        title = "When do hurricans and typhoons occur?",
-       subtitle = expression("Minimum central pressure records and \nwhen these occured during year."),
+       subtitle = expression("Annual minima in central pressure records."),
        caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
@@ -830,7 +830,7 @@ plot.duration.main <- ggplot(data = dd,
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
         plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0.5, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.subtitle = element_text(hjust = 0.9, vjust = -7, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
         panel.background = element_rect(fill = "#FAFAF2"),
         panel.border = element_blank(),
@@ -886,8 +886,8 @@ ggdraw(plot.duration.2)
 After what time do storms typically reach their maximum intensity?
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.duration.storm.main <- ggplot(data = dd.sum,
-                             aes(x = MinPressureAfter,
-                                 y = MinPressure)) + 
+                                   aes(x = MinPressureAfter,
+                                       y = MinPressure)) + 
   geom_vline(xintercept = 0, size = 0.8, colour = "#3C3C3C") +
   geom_point(aes(colour = Ocean),
              size = 0.8,
@@ -906,7 +906,7 @@ plot.duration.storm.main <- ggplot(data = dd.sum,
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
         plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0.6, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.subtitle = element_text(hjust = 0.9, vjust = -7, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
         panel.background = element_rect(fill = "#FAFAF2"),
         panel.border = element_blank(),
@@ -948,13 +948,13 @@ plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", 
 Now, one can combine all three plots to a single figure.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
-                                     plot.duration.storm.dens.x, 
-                                     grid::unit(0.2, "null"), 
-                                     position = "top")
+                                           plot.duration.storm.dens.x, 
+                                           grid::unit(0.2, "null"), 
+                                           position = "top")
 plot.duration.storm.2 <- insert_yaxis_grob(plot.duration.storm.1, 
-                                     plot.duration.storm.dens.y, 
-                                     grid::unit(.2, "null"), 
-                                     position = "right")
+                                           plot.duration.storm.dens.y, 
+                                           grid::unit(.2, "null"), 
+                                           position = "right")
 ggdraw(plot.duration.storm.2)
 ```
 
@@ -962,8 +962,8 @@ ggdraw(plot.duration.storm.2)
 However, the time at which a storm reaches its maximum intensity has to be related to its total duration.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.duration.storm.main <- ggplot(data = dd.sum,
-                             aes(x = MinPressureAfter/MaxDuration *100,
-                                 y = MinPressure)) + 
+                                   aes(x = MinPressureAfter/MaxDuration *100,
+                                       y = MinPressure)) + 
   geom_vline(xintercept = 0, size = 0.8, colour = "#3C3C3C") +
   geom_point(aes(colour = Ocean),
              size = 0.8,
@@ -972,8 +972,8 @@ plot.duration.storm.main <- ggplot(data = dd.sum,
   #             color = "#333333") +
   labs(x = "Duration at lowest minimum pressure in relation to total duration (%)", 
        y = "Minimum central pressure (mbar)",
-       title = expression("When do storms reach their maximum intensity \nrealted their total duration?"),
-       subtitle = expression("Interestingly, it appears that most storms are at their maximum intensity \nafter approximately 50% of their total duration."),
+       title = expression("When do storms reach their maximum intensity?"),
+       subtitle = expression("Most storms are at their maximum intensity at around half-time."),
        caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
@@ -981,8 +981,8 @@ plot.duration.storm.main <- ggplot(data = dd.sum,
         axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
-        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = 0, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = 0.5, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
         panel.background = element_rect(fill = "#FAFAF2"),
         panel.border = element_blank(),
@@ -1007,6 +1007,9 @@ plot.duration.storm.main <- ggplot(data = dd.sum,
 plot.duration.storm.dens.x <- axis_canvas(plot.duration.storm.main, axis = "x") + 
   geom_density(data = dd.sum, aes(x = MinPressureAfter/MaxDuration *100, fill = Ocean),
                alpha = 0.6, size = 0.2) +
+  # geom_histogram(data = dd.sum, aes(x = MinPressureAfter/MaxDuration *100, fill = Ocean),
+  #                alpha = 0.6, size = 0.2,
+  #                binwidth = 2) +
   # ggpubr::color_palette("jco")
   # scale_fill_manual(values = c("#B78A3F", "#58758C"))
   scale_fill_manual(values = c("#FF281E", "#0090CF"))
@@ -1015,6 +1018,9 @@ plot.duration.storm.dens.x <- axis_canvas(plot.duration.storm.main, axis = "x") 
 plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", coord_flip = TRUE) +
   geom_density(data = dd.sum, aes(x = MinPressure, fill = Ocean),
                alpha = 0.6, size = 0.2) +
+  # geom_histogram(data = dd.sum, aes(x = MinPressure, fill = Ocean),
+  #                alpha = 0.6, size = 0.2,
+  #                binwidth = 2) +
   # ggpubr::color_palette("jco") +
   # scale_fill_manual(values = c("#B78A3F", "#58758C")) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
@@ -1024,15 +1030,33 @@ plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", 
 Now, one can combine all three plots to a single figure.
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
-                                     plot.duration.storm.dens.x, 
-                                     grid::unit(0.2, "null"), 
-                                     position = "top")
+                                           plot.duration.storm.dens.x, 
+                                           grid::unit(0.2, "null"), 
+                                           position = "top")
 plot.duration.storm.2 <- insert_yaxis_grob(plot.duration.storm.1, 
-                                     plot.duration.storm.dens.y, 
-                                     grid::unit(.2, "null"), 
-                                     position = "right")
+                                           plot.duration.storm.dens.y, 
+                                           grid::unit(.2, "null"), 
+                                           position = "right")
 ggdraw(plot.duration.storm.2)
 ```
+
+
+Next, one can ask for the regions that are most storm prone.
+```{r}
+plot.pressure.main <- ggplot(data = dd,
+                             aes(x = Lon -360,
+                                 y = Lat)) +
+  stat_density_2d(geom = "raster",
+                  aes(fill = ..density..),
+                  contour = FALSE,
+                  alpha = 0.9,
+                  show.legend = FALSE)
+  # scale_fill_gradientn(colours = rev( brewer.pal( 9, "Blues" ))) +
+```
+
+
+
+
 
 
 
