@@ -1,11 +1,15 @@
 ---
-title: "Storm data preparation"
+layout: page
+title: ""
+date: 2018-01-12
 author: "Thomas M. Massie"
-date: "1/14/2018"
-output: 
-  html_document: 
+output:
+  html_document:
     keep_md: true
 ---
+<!-- mathjax: default -->
+
+
 
 
 
@@ -71,12 +75,12 @@ str(dd.org)
 
 Next, I make a couple of adjustments so that the data set matches my needs for analysis:
 
-  - *Year*: to summarise/describe data by year.
-  - *DateTimeSameYear*: when you only want to explore seasonal occurances.
-  - *Duration*: giving amount of time s storm lasted.
-  - *WindKPH*: wind speed in km per hour.
-  - *KeyPlus*: a combination of *Key* and *Name*.
-  - *SaffirSimpson*: assigning storms a value on the [Saffir-Simpson scale](https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale).
+- *Year*: to summarise/describe data by year.
+- *DateTimeSameYear*: when you only want to explore seasonal occurances.
+- *Duration*: giving amount of time s storm lasted.
+- *WindKPH*: wind speed in km per hour.
+- *KeyPlus*: a combination of *Key* and *Name*.
+- *SaffirSimpson*: assigning storms a value on the [Saffir-Simpson scale](https://en.wikipedia.org/wiki/Saffir%E2%80%93Simpson_scale).
 
 ```r
 dd <- dd.org %>%
