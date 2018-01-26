@@ -179,6 +179,9 @@ map %>%
   addLayersControl(overlayGroups = groups)
 ```
 
+It is nice to work with leaflet maps. Although, I have to say, for the setting with GitHub pages and reading in .md files it is not so cool. At least for a beginner...
+
+I carry on with [part 3](StormDataExploration_3.md) of the storm data exploration/analysis.
 
 
 

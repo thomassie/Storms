@@ -1,12 +1,11 @@
 ---
 layout: page
 title: ""
-date: 2018-01-17
+date: 2018-01-20
 author: "Thomas M. Massie"
 output:
   html_document:
     keep_md: true
-runtime: shiny  # to make sure leaflet objects are rendered on site
 ---
 
 
