@@ -105,8 +105,7 @@ dd.sum.year <- dd %>%
             Items = length(Pressure)) %>%
   arrange(-desc(Year))
 
-# '-Inf' and 'Inf' values are not useful here.
-# If these values are not removed they later appear in the plots.
+# Again, 'Inf' values are not useful here.
 dd.sum.year$MinPressure <- as.numeric(gsub("Inf", "NA", dd.sum.year$MinPressure))
 ```
 
@@ -199,18 +198,12 @@ plot.dur <- topn.Duration %>%
   ggplot(aes(x = KeyPlus,
              y = MaxDuration,
              fill = Ocean)) +
-  # geom_bar(stat="identity") +
   geom_col(alpha = 0.7) +
-  # scale_x_discrete(limits = rev(levels(topn.Duration$ID.plus))) +
-  # theme_bw() +
   theme_classic() +
   xlab("") +
   ylab("") +
   ggtitle("Maximum duration \n(days)") +
   theme(axis.text = element_text(size = 10),
-        # axis.line = element_blank(),
-        # axis.text.x = element_blank(),
-        # axis.ticks.y = element_blank(),
         axis.text.x = element_text(angle = 0, hjust = 0.5, size = 12)) +
   geom_text(aes(label = MaxDuration),
             angle = 0,
@@ -219,9 +212,6 @@ plot.dur <- topn.Duration %>%
             position = position_dodge(width = 0.1),
             hjust = 1.5,
             vjust = 0.5) +
-  # theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)) +
-  # scale_y_continuous(expand = c(0.1,0)) +
-  # geom_hline(yintercept = 0) +
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
   coord_flip() +
@@ -276,7 +266,6 @@ plot.pres <- topn.Pressure.Min %>%
                      limits = c(800, max(topn.Pressure.Min$MinPressure)),
                      oob = rescale_none) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
-  # coord_cartesian(ylim = c(800, max(topn.Pressure.Min$MinPressure))) +
   scale_x_discrete(limits = rev(levels(topn.Pressure.Min$KeyPlus))) +
   rremove("legend") +
   coord_flip() 
@@ -305,7 +294,6 @@ plot.pressure.main <- ggplot(data = dd,
              alpha = 0.1,
              size = 0.3) +
   geom_point(data = dd.sum.year,
-             # geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
              aes(x = DateTime.p,
                  y = MinPressure),
              shape = 1,
@@ -319,13 +307,11 @@ plot.pressure.main <- ggplot(data = dd,
             alpha = 0.5,
             colour = "#333333") +
   geom_smooth(data = dd.sum.year,
-              # geom_smooth(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
               aes(x = DateTime.p,
                   y = MinPressure),
               method = "lm",
               se = FALSE,
               span = 0.2,
-              # linetype = "dashed",
               colour = "#999999",
               alpha = 0.9,
               size = 0.8) +
@@ -357,9 +343,6 @@ plot.pressure.main <- ggplot(data = dd,
         legend.position=c(1.02, 0.3),
         legend.background = element_blank(),
         legend.key = element_blank()) +
-  # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
-  # ggpubr::color_palette("jco") +
-  # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
   scale_colour_manual(values = c("#FF281E", "#0090CF")) +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) 
 
@@ -368,15 +351,11 @@ plot.pressure.main <- ggplot(data = dd,
 plot.pressure.dens.x <- axis_canvas(plot.pressure.main, axis = "x") + 
   geom_density(data = dd, aes(x = as.numeric(DateTime), fill = Ocean),
                alpha = 0.6, size = 0.2) +
-  # ggpubr::color_palette("jco")
-  # scale_fill_manual(values = c("#B78A3F", "#58758C"))
   scale_fill_manual(values = c("#FF281E", "#0090CF"))
 # ...and one on the right site.
 plot.pressure.dens.y <- axis_canvas(plot.pressure.main, axis = "y", coord_flip = TRUE) +
   geom_density(data = dd, aes(x = as.numeric(Pressure), fill = Ocean),
                alpha = 0.6, size = 0.2) +
-  # ggpubr::color_palette("jco") +
-  # scale_fill_manual(values = c("#B78A3F", "#58758C")) +
   scale_fill_manual(values = c("#FF281E", "#0090CF")) +
   coord_flip()
 ```
@@ -397,48 +376,45 @@ ggdraw(plot.pressure.2)
 
 ![](StormDataExploration_1_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
-Now, the same figure for wind speed.
+
+Now, the same figure for wind speed. (I do not show the code since it is almost identical to the one above.)
+
+
+![](StormDataExploration_1_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+
+It seems that minima in central pressure and wind speed maxima are correlated with each other. First, I will check for a linear relationship. There are several ways how to get an idea about a fit and its residuals: either using some 'automatic' summary functions outside (e.g. broom package) or within ggplot (geom_smooth). Or, one calculates the residuals by hand. This has the advantage that one can generate a data frame which includes more than just the regression variables.
 
 ```r
-# Main plot.
-plot.wind.main <- ggplot(data = dd,
-                         aes(x = DateTime,
-                             y = WindKPH)) +
-  geom_point(aes(colour = Ocean),
-             alpha = 0.1,
-             size = 0.3) +
-  geom_point(data = dd.sum.year,
-             # geom_point(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
-             aes(x = DateTime.p,
-                 y = MaxWindKPH),
-             shape = 1,
-             size = 1.2,
-             stroke = 0.5,
-             colour = "#333333") +
-  geom_line(data = dd.sum.year,
-            aes(x = (DateTime.p),
-                y = MaxWindKPH),
-            size = 0.3,
-            alpha = 0.5,
+# Before I forget it: the linear correlation coefficient:
+rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
+
+# A linear regression model of how wind speed is dependent on air pressure.
+model.1 <- lm(dd$WindKPH ~ dd$Pressure)
+# Generate a data frame for the model fit with 'augment' (broom package)...
+dd.model.temp.1 <- augment(model.1)
+# ...or by hand from the regression model object. =)
+# I include only storms with recorded pressure values.
+dd.model.1 <- filter(dd, Pressure != "NA") %>%
+  mutate(ModelFitLin = model.1$fitted.values,
+         ModelResLin = model.1$residuals)
+
+# And I plot the resudials...
+ggplot(data = dd.model.1) +
+  geom_point(aes(x = Pressure,
+                 y = WindKPH,
+                 colour = Ocean),
+             alpha = 0.4,
+             size = 1.1) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  geom_line(aes(x = Pressure,
+                y = ModelFitLin),
             colour = "#333333") +
-  geom_smooth(data = dd.sum.year,
-              # geom_smooth(data = filter(dd.sum.year, year.min <= year(dd.sum.year$DateTime.p) & year(dd.sum.year$DateTime.p) <= year.max),
-              aes(x = DateTime.p,
-                  y = MaxWindKPH),
-              method = "lm",
-              se = FALSE,
-              span = 0.2,
-              # linetype = "dashed",
-              colour = "#999999",
-              alpha = 0.9,
-              size = 0.8) +
-  theme_bw() +
-  geom_rug(alpha = 0.02,
-           colour = "#999999") +
-  labs(x = "Year", 
+  geom_hline(yintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  labs(x = "Minimum in central pressure (hPa)", 
        y = "Maximum wind speed (km/h)",
-       title = "Do extreme events become more severe?",
-       subtitle = expression("Storm intensity indicated by maximum wind speed."),
+       title = "Strong relationship between wind speed and \ncentral pressure",
+       subtitle = paste( "Recorded maximum wind speed is correlated with central pressure by", expression(rho), " = ", paste(round(rho.wind.pres, 2)),"."),
        caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
@@ -447,60 +423,75 @@ plot.wind.main <- ggplot(data = dd,
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
         plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -1, colour = "#3C3C3C", size = 11),
-        plot.caption = element_text(size = 8, hjust = 1.5, vjust = -0.05, colour = "#7F8182"),
+        plot.subtitle = element_text(hjust = 0, vjust = -2, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1, vjust = -0.2, colour = "#7F8182"),
         panel.background = element_rect(fill = "#FAFAF2"),
         panel.border = element_blank(),
         plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
         panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
         panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
   theme(legend.title = element_blank(),
-        legend.justification=c(0,1), 
-        legend.position=c(1.0, 0.95),
+        legend.justification=c(0,1),
+        legend.position=c(0.8, 0.97),
         legend.background = element_blank(),
-        legend.key = element_blank()) +
-  # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
-  # ggpubr::color_palette("jco") +
-  # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
-  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+        legend.key = element_blank(),
+        legend.text = element_text(size = 10, colour = "#3C3C3C")) +
+  # annotate("text", x = 920, y = 310, label = paste("rho = ", round(rho.wind.pres, 2))) +
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
-# title = paste("Minimum pressure recorded for years", year.min, "to", year.max))
-# ggtitle(paste("Minimum pressure recorded for years", year.min, "to", year.max))
-
-# A density plot on top of the main plot.
-# TREAT the date.time AS NUMERIC!!!
-plot.wind.dens.x <- axis_canvas(plot.wind.main, axis = "x") + 
-  geom_density(data = dd, aes(x = as.numeric(DateTime), fill = Ocean),
-               alpha = 0.6, size = 0.2) +
-  # ggpubr::color_palette("jco")
-  # scale_fill_manual(values = c("#B78A3F", "#58758C"))
-  scale_fill_manual(values = c("#FF281E", "#0090CF"))
-# ...and one on the right site.
-plot.wind.dens.y <- axis_canvas(plot.wind.main, axis = "y", coord_flip = TRUE) +
-  geom_density(data = dd, aes(x = as.numeric(WindKPH), fill = Ocean),
-               alpha = 0.6, size = 0.2) +
-  # ggpubr::color_palette("jco") +
-  # scale_fill_manual(values = c("#B78A3F", "#58758C")) +
-  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
-  coord_flip()
 ```
 
-Again, combining all subplots...
+![](StormDataExploration_1_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+
+Not bad, but the data seem to show a significant and systematic deviation from the regression model fit (upper left area). I will have a look at the residuals to see whether they confirm my impression that there is [heteroskedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity) involved.
+![](StormDataExploration_1_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+
+
+Well, apparently the residuals are not euqually distributed, but rather heteroskedastically. That means that a linear relationship does not hold here. For now, I do not want to go into non-linear regression analysis. Therefore, let me simply show how a better relationship between air pressure and wind speed may look like. 
 
 ```r
-plot.wind.1 <- insert_xaxis_grob(plot.wind.main, 
-                                 plot.wind.dens.x, 
-                                 grid::unit(0.2, "null"), 
-                                 position = "top")
-plot.wind.2 <- insert_yaxis_grob(plot.wind.1, 
-                                 plot.wind.dens.y, 
-                                 grid::unit(.2, "null"), 
-                                 position = "right")
-ggdraw(plot.wind.2)
+ggplot(data = dd,
+       aes(x = Pressure,
+           y = WindKPH)) +
+  geom_point(aes(colour = Ocean),
+             alpha = 0.4,
+             size = 1.1) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  geom_smooth(method = "lm", 
+              formula = y ~ splines::bs(x, 3),
+              color = "#333333") +
+  geom_hline(yintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  labs(x = "Minimum Pressure (hPa)", 
+       y = "Maximum wind speed (km/h)",
+       title = "Strong relationship between wind speed and \ncentral pressure",
+       subtitle = paste("A non-linear fit represents this relationship a bit better."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = -2, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1, vjust = -0.2, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#FAFAF2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_blank(),
+        legend.justification=c(0,1),
+        legend.position=c(0.8, 0.95),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(size = 10, colour = "#3C3C3C")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
-![](StormDataExploration_1_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](StormDataExploration_1_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
+I was using a spline fit that just draws a pretty nice line through the data points. It represents the relationship a bit better. A non-linear fit makes only sense when one has a model at hand that is based on theory and/or part of a hypothesis. That is, one describes the relationship by a model, to then fit it to the data. But since I have no causal explanation why exactly wind speed does not scale linearily with air pressure and how the relationship can be rather explained I just leave it like that... =)
 
 
 ## Storing the data set

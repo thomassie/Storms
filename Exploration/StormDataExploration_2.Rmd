@@ -50,7 +50,7 @@ library(showtext)
 Loading the workspace that has been saved in the first part of the data exploration.
 ```{r message = FALSE}
 # Entire workspace.
-source_data("https://github.com/thomassie/Storms/blob/master/Preparation/StormDataWorkSpace.RData?raw=true")
+source_data("https://github.com/thomassie/Storms/blob/master/Exploration/StormDataWorkSpace.RData?raw=true")
 ```
 
 
@@ -182,123 +182,7 @@ map %>%
 ```
 
 
-It seems that central pressure and wind speed are correlated with each other. How much? I will check for a linear relationship.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
-# ggplot(data = dd.345,
-#        aes(x = DateTime,
-#            y = Pressure)) +
-#   # geom_hline(yintercept = 209) +
-#   geom_point(aes(size = (WindKPH^1.2)/50,
-#                  colour = ???),
-#              alpha = 0.3) +
-#   scale_colour_manual(values = c("#3F5AA2", "#A4C95D")) +
-#   theme_bw()
 
-ggplot(data = dd,
-       aes(x = Pressure,
-           y = WindKPH)) +
-  # geom_hline(yintercept = 209) +
-  geom_point(aes(colour = Ocean),
-             alpha = 0.4,
-             size = 1.1) +
-  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
-  geom_smooth(method = "lm",
-              color = "#333333") +
-  # geom_smooth(aes(group = Ocean,
-  #                 colour = Ocean),
-  #             size = 0.5,
-  #             method = "lm") +
-  geom_hline(yintercept = 0, size = 0.8, colour = "#3C3C3C") +
-  labs(x = "Minimum Pressure (hPa)", 
-       y = "Maximum wind speed (km/h)",
-       title = "Strong relationship between wind speed and \ncentral pressure",
-       subtitle = paste( "Recorded maximum wind speed is correlated with central pressure by", expression(rho), " = ", paste(round(rho.wind.pres, 2)),"."),
-       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
-  theme(axis.text = element_text(family = "Varela Round"),
-        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
-        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
-        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
-        axis.ticks.length = unit(5, "mm"),
-        axis.line = element_blank(),
-        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -2, colour = "#3C3C3C", size = 11),
-        plot.caption = element_text(size = 8, hjust = 1, vjust = -0.2, colour = "#7F8182"),
-        panel.background = element_rect(fill = "#FAFAF2"),
-        panel.border = element_blank(),
-        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
-        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
-  theme(legend.title = element_blank(),
-        legend.justification=c(0,1),
-        legend.position=c(0.8, 0.97),
-        legend.background = element_blank(),
-        legend.key = element_blank(),
-        legend.text = element_text(size = 10, colour = "#3C3C3C")) +
-  # annotate("text", x = 920, y = 310, label = paste("rho = ", round(rho.wind.pres, 2))) +
-  guides(colour = guide_legend(override.aes = list(alpha = 1)))
-```
-
-
-Not bad, but the residuals (data - fit) seem to show some [heteroskedasticity](https://en.wikipedia.org/wiki/Heteroscedasticity).  Maybe the relationship can be better described by another fit...?
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
-rho.wind.pres <- cor(dd$Pressure, dd$WindKPH, use = "complete.obs")
-# ggplot(data = dd.345,
-#        aes(x = DateTime,
-#            y = Pressure)) +
-#   # geom_hline(yintercept = 209) +
-#   geom_point(aes(size = (WindKPH^1.2)/50,
-#                  colour = ???),
-#              alpha = 0.3) +
-#   scale_colour_manual(values = c("#3F5AA2", "#A4C95D")) +
-#   theme_bw()
-
-ggplot(data = dd,
-       aes(x = Pressure,
-           y = WindKPH)) +
-  # geom_hline(yintercept = 209) +
-  geom_point(aes(colour = Ocean),
-             alpha = 0.4,
-             size = 1.1) +
-  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
-  # geom_smooth(formula = y ~ -x^2,
-  #             color = "#333333") +
-  geom_smooth(method = "lm", 
-              formula = y ~ splines::bs(x, 3),
-              color = "#333333") +
-  # geom_smooth(aes(group = Ocean,
-  #                 colour = Ocean),
-  #             size = 0.5,
-  #             method = "lm") +
-  geom_hline(yintercept = 0, size = 0.8, colour = "#3C3C3C") +
-  labs(x = "Minimum Pressure (hPa)", 
-       y = "Maximum wind speed (km/h)",
-       title = "Strong relationship between wind speed and \ncentral pressure",
-       subtitle = paste("A non-linear fit represents this relationship a bit better."),
-       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
-  theme(axis.text = element_text(family = "Varela Round"),
-        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
-        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
-        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
-        axis.ticks.length = unit(5, "mm"),
-        axis.line = element_blank(),
-        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -2, colour = "#3C3C3C", size = 11),
-        plot.caption = element_text(size = 8, hjust = 1, vjust = -0.2, colour = "#7F8182"),
-        panel.background = element_rect(fill = "#FAFAF2"),
-        panel.border = element_blank(),
-        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
-        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
-        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
-  theme(legend.title = element_blank(),
-        legend.justification=c(0,1),
-        legend.position=c(0.8, 0.95),
-        legend.background = element_blank(),
-        legend.key = element_blank(),
-        legend.text = element_text(size = 10, colour = "#3C3C3C")) +
-  # annotate("text", x = 920, y = 310, label = paste("rho = ", round(rho.wind.pres, 2))) +
-  guides(colour = guide_legend(override.aes = list(alpha = 1)))
-```
 
 
 When do the storms typicall occur during a year?
@@ -380,7 +264,7 @@ ggdraw(plot.pressure.year.2)
 
 
 When do the storms typicall occur during a year?
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.main <- ggplot(data = dd,
                              aes(x = Duration,
                                  y = Pressure)) + 
@@ -447,8 +331,7 @@ plot.duration.dens.y <- axis_canvas(plot.duration.main, axis = "y", coord_flip =
   coord_flip()
 ```
 
-Now, one can combine all three plots to a single figure.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.1 <- insert_xaxis_grob(plot.duration.main, 
                                      plot.duration.dens.x, 
                                      grid::unit(0.2, "null"), 
@@ -462,7 +345,7 @@ ggdraw(plot.duration.2)
 
 
 After what time do storms typically reach their maximum intensity?
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.storm.main <- ggplot(data = dd.sum,
                                    aes(x = MinPressureAfter,
                                        y = MinPressure)) + 
@@ -529,8 +412,7 @@ plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", 
   coord_flip()
 ```
 
-Now, one can combine all three plots to a single figure.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
                                            plot.duration.storm.dens.x, 
                                            grid::unit(0.2, "null"), 
@@ -544,7 +426,7 @@ ggdraw(plot.duration.storm.2)
 
 
 However, the time at which a storm reaches its maximum intensity has to be related to its total duration.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.storm.main <- ggplot(data = dd.sum,
                                    aes(x = MinPressureAfter/MaxDuration *100,
                                        y = MinPressure)) + 
@@ -617,8 +499,7 @@ plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", 
   coord_flip()
 ```
 
-Now, one can combine all three plots to a single figure.
-```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
 plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
                                            plot.duration.storm.dens.x, 
                                            grid::unit(0.2, "null"), 
