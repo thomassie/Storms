@@ -1,0 +1,366 @@
+---
+layout: page
+title: ""
+date: 2018-01-17
+author: "Thomas M. Massie"
+output:
+  html_document:
+    keep_md: true
+runtime: shiny  # to make sure leaflet objects are rendered on site
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include = FALSE}
+rm(list=ls())
+```
+
+
+```{r include = FALSE}
+# Load libraries.
+library(repmis)
+library(tidyverse)
+library(ggplot2)
+library(ggExtra)
+library(lubridate)
+library(scales)
+library(chron)
+library(ggmap)
+library(sp)
+library(leaflet)
+library(maps)
+library(maptools)
+library(cowplot)
+library(RColorBrewer)
+library(ggpubr)
+library(showtext)
+library(broom)
+library(shiny)
+```
+
+
+
+# Storm data exploration (3/n)
+
+
+
+## Loading the environment
+
+Loading the workspace that has been saved in the first part of the data exploration.
+```{r message = FALSE}
+# Entire workspace.
+source_data("https://github.com/thomassie/Storms/blob/master/Exploration/StormDataWorkSpace.RData?raw=true")
+```
+
+
+When do the storms typicall occur during a year?
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+plot.pressure.year.main <- ggplot(data = dd,
+                                  aes(x = DateTimeSameYear,
+                                      y = Pressure)) + 
+  geom_point(aes(colour = Ocean),
+             size = 0.8,
+             alpha = 0.1) +
+  # geom_smooth(method = "lm",
+  #             color = "#333333") +
+  labs(x = "Month", 
+       y = "Minimum central pressure (mbar)",
+       title = "When do hurricans and typhoons occur?",
+       subtitle = expression("Annual minima in central pressure records."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#FAFAF2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_blank(),
+        legend.justification=c(0,1),
+        legend.position=c(1.02, 0.3),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(size = 10)) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  # rremove("legend") +
+  scale_x_datetime(labels = date_format("%b"),
+                   date_breaks = "month",
+                   limits = c(min(dd$DateTimeSameYear), max(dd$DateTimeSameYear))) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+plot.pressure.year.dens.x <- axis_canvas(plot.pressure.year.main, axis = "x") + 
+  geom_density(data = dd, aes(x = as.numeric(DateTimeSameYear), fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF"))
+
+# ...and one on the right site.
+plot.pressure.year.dens.y <- axis_canvas(plot.pressure.year.main, axis = "y", coord_flip = TRUE) +
+  geom_density(data = dd, aes(x = as.numeric(Pressure), fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
+  coord_flip()
+```
+
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
+plot.pressure.year.1 <- insert_xaxis_grob(plot.pressure.year.main, 
+                                          plot.pressure.year.dens.x, 
+                                          grid::unit(0.2, "null"), 
+                                          position = "top")
+plot.pressure.year.2 <- insert_yaxis_grob(plot.pressure.year.1, 
+                                          plot.pressure.year.dens.y, 
+                                          grid::unit(.2, "null"), 
+                                          position = "right")
+ggdraw(plot.pressure.year.2)
+```
+
+
+When do the storms typicall occur during a year?
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.main <- ggplot(data = dd,
+                             aes(x = Duration,
+                                 y = Pressure)) + 
+  geom_vline(xintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  geom_point(aes(colour = Ocean),
+             size = 0.8,
+             alpha = 0.1) +
+  labs(x = "Duration (days)", 
+       y = "Minimum central pressure (mbar)",
+       title = expression("When do storms reach their maximum intensity?"),
+       subtitle = expression("Most storms showed their lowest minimum in \ncentral pressure briefly after they built up."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0.9, vjust = -7, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#FAFAF2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.title = element_blank(),
+        legend.justification=c(0,1),
+        legend.position=c(1.02, 0.3),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(size = 10)) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+# A density plot on top of the main plot.
+# TREAT the date.time AS NUMERIC!!!
+plot.duration.dens.x <- axis_canvas(plot.duration.main, axis = "x") + 
+  geom_density(data = dd, aes(x = Duration, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF"))
+
+# ...and one on the right site.
+plot.duration.dens.y <- axis_canvas(plot.duration.main, axis = "y", coord_flip = TRUE) +
+  geom_density(data = dd, aes(x = Pressure, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
+  coord_flip()
+```
+
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.1 <- insert_xaxis_grob(plot.duration.main, 
+                                     plot.duration.dens.x, 
+                                     grid::unit(0.2, "null"), 
+                                     position = "top")
+plot.duration.2 <- insert_yaxis_grob(plot.duration.1, 
+                                     plot.duration.dens.y, 
+                                     grid::unit(.2, "null"), 
+                                     position = "right")
+ggdraw(plot.duration.2)
+```
+
+
+After what time do storms typically reach their maximum intensity?
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.storm.main <- ggplot(data = dd.sum,
+                                   aes(x = MinPressureAfter,
+                                       y = MinPressure)) + 
+  geom_vline(xintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  geom_point(aes(colour = Ocean,
+                 size = MaxWindKPH),
+             show.legend = TRUE,
+             # size = 0.8,
+             alpha = 0.2) +
+  labs(x = "Duration at lowest minimum pressure (days)", 
+       y = "Minimum central pressure (mbar)",
+       title = expression("When do storms reach their maximum intensity?"),
+       subtitle = expression("Most storms show their lowest minimum \npressure briefly after they built up."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0.9, vjust = -7, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#FAFAF2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.justification=c(0,1),
+        legend.position=c(1.02, 0.3),
+        legend.background = element_blank(),
+        legend.title=element_text(size=10),
+        legend.text = element_text(size = 10)) +
+  labs(colour = "Ocean",
+       size = expression("Wind speed \n(km/h)")) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+# A density plot on top of the main plot.
+# TREAT the date.time AS NUMERIC!!!
+plot.duration.storm.dens.x <- axis_canvas(plot.duration.storm.main, axis = "x") + 
+  geom_density(data = dd.sum, aes(x = MinPressureAfter, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF"))
+
+# ...and one on the right site.
+plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", coord_flip = TRUE) +
+  geom_density(data = dd.sum, aes(x = MinPressure, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
+  coord_flip()
+```
+
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
+                                           plot.duration.storm.dens.x, 
+                                           grid::unit(0.2, "null"), 
+                                           position = "top")
+plot.duration.storm.2 <- insert_yaxis_grob(plot.duration.storm.1, 
+                                           plot.duration.storm.dens.y, 
+                                           grid::unit(.2, "null"), 
+                                           position = "right")
+ggdraw(plot.duration.storm.2)
+```
+
+
+However, the time at which a storm reaches its maximum intensity has to be related to its total duration.
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.storm.main <- ggplot(data = dd.sum,
+                                   aes(x = MinPressureAfter/MaxDuration *100,
+                                       y = MinPressure)) + 
+  geom_vline(xintercept = 0, size = 0.8, colour = "#3C3C3C") +
+  geom_point(aes(colour = Ocean,
+                 size = MaxWindKPH),
+             # size = MaxWindKPH^4/100000),
+             show.legend = TRUE,
+             # size = 0.8,
+             alpha = 0.2) +
+  # geom_smooth(method = "lm",
+  #             color = "#333333") +
+  labs(x = "Duration at lowest minimum pressure in relation to total duration (%)", 
+       y = "Minimum central pressure (mbar)",
+       title = expression("When do storms reach their maximum intensity?"),
+       subtitle = expression("Most storms are at their maximum intensity at around half-time."),
+       caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
+  theme(axis.text = element_text(family = "Varela Round"),
+        axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
+        axis.text.y = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 0.5),
+        axis.ticks = element_line(colour = "#D7D8D8", size = 0.2),
+        axis.ticks.length = unit(5, "mm"),
+        axis.line = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0, vjust = 0, colour = "#3C3C3C", size = 20),
+        plot.subtitle = element_text(hjust = 0, vjust = 0.5, colour = "#3C3C3C", size = 11),
+        plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
+        panel.background = element_rect(fill = "#FAFAF2"),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "#FAFAF2", colour = "#FAFAF2"),
+        panel.grid.major = element_line(colour = "#D7D8D8", size = 0.2),
+        panel.grid.minor = element_line(colour = "#D7D8D8", size = 0.2)) +
+  theme(legend.justification=c(0,1),
+        # legend.title = element_blank(),
+        legend.position=c(1.02, 0.3),
+        legend.background = element_blank(),
+        legend.title=element_text(size=10),
+        # legend.key = element_blank(),
+        legend.text = element_text(size = 10)) +
+  labs(colour = "Ocean",
+       size = expression("Wind speed \n(km/h)")) +
+  # geom_text(data = dd.lines, aes(label = year(int), x = int, y = -Inf), angle = 0, inherit.aes = F, hjust = -0.2, vjust = -36, size = 3.5) +
+  # ggpubr::color_palette("jco") +
+  # scale_colour_manual(values = c("#B78A3F", "#58758C")) +
+  scale_colour_manual(values = c("#FF281E", "#0090CF")) +
+  # rremove("legend") +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+# A density plot on top of the main plot.
+# TREAT the date.time AS NUMERIC!!!
+plot.duration.storm.dens.x <- axis_canvas(plot.duration.storm.main, axis = "x") + 
+  geom_density(data = dd.sum, aes(x = MinPressureAfter/MaxDuration *100, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  # geom_histogram(data = dd.sum, aes(x = MinPressureAfter/MaxDuration *100, fill = Ocean),
+  #                alpha = 0.6, size = 0.2,
+  #                binwidth = 2) +
+  # ggpubr::color_palette("jco")
+  # scale_fill_manual(values = c("#B78A3F", "#58758C"))
+  scale_fill_manual(values = c("#FF281E", "#0090CF"))
+
+# ...and one on the right site.
+plot.duration.storm.dens.y <- axis_canvas(plot.duration.storm.main, axis = "y", coord_flip = TRUE) +
+  geom_density(data = dd.sum, aes(x = MinPressure, fill = Ocean),
+               alpha = 0.6, size = 0.2) +
+  # geom_histogram(data = dd.sum, aes(x = MinPressure, fill = Ocean),
+  #                alpha = 0.6, size = 0.2,
+  #                binwidth = 2) +
+  # ggpubr::color_palette("jco") +
+  # scale_fill_manual(values = c("#B78A3F", "#58758C")) +
+  scale_fill_manual(values = c("#FF281E", "#0090CF")) +
+  coord_flip()
+```
+
+```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE, echo = FALSE}
+plot.duration.storm.1 <- insert_xaxis_grob(plot.duration.storm.main, 
+                                           plot.duration.storm.dens.x, 
+                                           grid::unit(0.2, "null"), 
+                                           position = "top")
+plot.duration.storm.2 <- insert_yaxis_grob(plot.duration.storm.1, 
+                                           plot.duration.storm.dens.y, 
+                                           grid::unit(.2, "null"), 
+                                           position = "right")
+ggdraw(plot.duration.storm.2)
+```
+
+
+Next, one can ask for the regions that are most storm prone.
+```{r}
+plot.pressure.main <- ggplot(data = dd,
+                             aes(x = Lon -360,
+                                 y = Lat)) +
+  stat_density_2d(geom = "raster",
+                  aes(fill = ..density..),
+                  contour = FALSE,
+                  alpha = 0.9,
+                  show.legend = FALSE)
+# scale_fill_gradientn(colours = rev( brewer.pal( 9, "Blues" ))) +
+```
+
+
+
+
+
+
+

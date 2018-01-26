@@ -38,6 +38,7 @@ library(RColorBrewer)
 library(ggpubr)
 library(showtext)
 library(broom)
+library(shiny)
 ```
 
 ```{r include = FALSE}
@@ -65,7 +66,7 @@ theme_tmm538 <- function (base_size = 11, base_family = "")
 ```
 
 
-# Storm data exploration (1/2)
+# Storm data exploration (1/n)
 
 
 
