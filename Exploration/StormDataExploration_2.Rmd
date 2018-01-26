@@ -93,7 +93,11 @@ groups = as.character(unique(dd.s$KeyPlus))
 
 # The basic map.
 map = leaflet(dd.s) %>% 
-  addProviderTiles(providers$CartoDB.DarkMatter)
+  # addProviderTiles(providers$CartoDB.DarkMatter)
+  # addProviderTiles(providers$OpenMapSurfer.Grayscale)
+  addProviderTiles(providers$CartoDB.Positron)
+# addProviderTiles(providers$Esri.OceanBasemap)
+
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
 groupColors = colorNumeric(palette = "YlOrRd", domain = dd$MaxWindKPH)
