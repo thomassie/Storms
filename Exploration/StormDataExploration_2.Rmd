@@ -46,6 +46,9 @@ library(shiny)
 
 # Storm data exploration (2/n)
 
+Unfortunately, it is not possible (for me) to generate leaflet objects in RMarkdown (.Rmd), knit the .Rmd file to an markdown file (.md) and an .html document, to them use the .md file as page with GitHub pages. For some reason this is not working and I could not figure out way, yet. However, the generated .html file from RStudio is working, however, the formatting is not the same as for the rest of the site. Sorry for that!
+
+In case anyone can provide some help and hint feel free to drop me a line or post an answer at [stackoverflow](https://stackoverflow.com/questions/48379530/no-figures-when-md-file-is-used-as-page-with-github-pages). Thank you!
 
 
 ## Loading the environment
@@ -78,7 +81,7 @@ topn.select.Pressure.Min  <- arrange(dd.select.sum, -desc(dd.select.sum$MinPress
 ```
 
 
-Let's have a look at these storms. First, I want to see which are the storms that lasted the longest and where they ocurred. (I use a data set called 'dd.s' indicating a selection of the entire summary data set 'dd.sum'.)
+Let's have a look at these storms. First, I want to see which are the storms that lasted the longest and where they ocurred. I use a data set called 'dd.s' which represents a **s**election of the entire summary data set 'dd.sum'. 
 ```{r warning = FALSE, message = FALSE}
 # renderLeaflet({
 
@@ -90,13 +93,10 @@ groups = as.character(unique(dd.s$KeyPlus))
 
 # The basic map.
 map = leaflet(dd.s) %>% 
-  # addProviderTiles(providers$CartoDB.Positron)
-  # addProviderTiles(providers$Esri.WorldTerrain)
   addProviderTiles(providers$CartoDB.DarkMatter)
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
 groupColors = colorNumeric(palette = "YlOrRd", domain = dd$MaxWindKPH)
-# groupColors = scale_colour_brewer("dd.s$Saffir.Simpson")
 
 # Grouping!
 for (g in groups) {
@@ -143,13 +143,10 @@ groups = as.character(unique(dd.s$KeyPlus))
 
 # The basic map.
 map = leaflet(dd.s) %>% 
-  # addProviderTiles(providers$CartoDB.Positron)
-  # addProviderTiles(providers$Esri.WorldTerrain)
   addProviderTiles(providers$CartoDB.DarkMatter)
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
 groupColors = colorNumeric(palette = "YlOrRd", domain = dd$MaxWindKPH)
-# groupColors = scale_colour_brewer("dd.s$Saffir.Simpson")
 
 # Grouping!
 for (g in groups) {
