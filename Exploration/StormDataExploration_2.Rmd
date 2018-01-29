@@ -46,9 +46,9 @@ library(shiny)
 
 # Storm data exploration (2/n)
 
-Unfortunately, it is not possible (for me) to generate leaflet objects in RMarkdown (.Rmd), knit the .Rmd file to an markdown file (.md) and an .html document, to them use the .md file as page with GitHub pages. For some reason this is not working and I could not figure out way, yet. However, the generated .html file from RStudio is working, however, the formatting is not the same as for the rest of the site. Sorry for that!
+Unfortunately, it is not possible (for me) to generate leaflet objects in RMarkdown (.Rmd), knit the .Rmd file to a markdown file (.md) and an .html document, to then use the .md file as a page with GitHub pages. For some reason this is not working and I could not figure out a solution, yet. However, the generated .html file from RStudio is working -- although, the formatting is not the same as for the rest of the site. Sorry for that!
 
-In case anyone can provide some help and hint feel free to drop me a line or post an answer at [stackoverflow](https://stackoverflow.com/questions/48379530/no-figures-when-md-file-is-used-as-page-with-github-pages). Thank you!
+In case anyone can provide some help or hint feel free to drop me a line or post an answer at [stackoverflow](https://stackoverflow.com/questions/48379530/no-figures-when-md-file-is-used-as-page-with-github-pages). Thank you!
 
 
 ## Loading the environment
