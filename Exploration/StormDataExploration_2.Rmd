@@ -32,6 +32,7 @@ library(chron)
 library(ggmap)
 library(sp)
 library(leaflet)
+library(leaflet.extras)
 library(maps)
 library(maptools)
 library(cowplot)
@@ -95,8 +96,9 @@ groups = as.character(unique(dd.s$KeyPlus))
 map = leaflet(dd.s) %>% 
   # addProviderTiles(providers$CartoDB.DarkMatter)
   # addProviderTiles(providers$OpenMapSurfer.Grayscale)
-  addProviderTiles(providers$CartoDB.Positron)
+  addProviderTiles(providers$CartoDB.Positron) %>%
 # addProviderTiles(providers$Esri.OceanBasemap)
+  addFullscreenControl(position = "topleft", pseudoFullscreen = FALSE)
 
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
@@ -147,7 +149,8 @@ groups = as.character(unique(dd.s$KeyPlus))
 
 # The basic map.
 map = leaflet(dd.s) %>% 
-  addProviderTiles(providers$CartoDB.DarkMatter)
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addFullscreenControl(position = "topleft", pseudoFullscreen = FALSE)
 
 # Colors of a specific palette assigned to 'Maximum.Wind'.
 groupColors = colorNumeric(palette = "YlOrRd", domain = dd$MaxWindKPH)

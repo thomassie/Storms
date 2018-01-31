@@ -605,6 +605,9 @@ I was using a spline fit that just draws a pretty nice line through the data poi
 Again, I save the workspace for further analysis!
 ```{r}
 save.image("StormDataWorkSpace.RData")
+write_csv(dd, "StormDataAll.csv")
+write_csv(dd.sum, "StormDataSumID.csv")
+write_csv(dd.sum.year, "StormDataSumYear.csv")
 ```
 
 
