@@ -45,6 +45,7 @@ library(shiny)
 
 # Storm data exploration (3/n)
 
+In this part I want to have a look at annual patterns. That is, when do storms typically start to build up? When do they disappear again? Are there differences between hurricanes (Atlantic) and typhoons (Pacific)? Questions like these... 
 
 
 ## Loading the environment
@@ -56,7 +57,7 @@ source_data("https://github.com/thomassie/Storms/blob/master/Exploration/StormDa
 ```
 
 
-When do the storms typicall occur during a year?
+Now, let me start with the first question: When do the storms occur during a year?
 ```{r fig.height = 6, fig.width = 8, messages = FALSE, warning = FALSE}
 plot.pressure.year.main <- ggplot(data = dd,
                                   aes(x = DateTimeSameYear,
@@ -69,7 +70,7 @@ plot.pressure.year.main <- ggplot(data = dd,
   labs(x = "Month", 
        y = "Minimum central pressure (mbar)",
        title = "When do hurricans and typhoons occur?",
-       subtitle = expression("Annual minima in central pressure records."),
+       subtitle = expression("Storm season typically starts in May and ends in \nNovember. Most Hurricanes build up about two \nmonths later than typhoons."),
        caption = "Source: NOAA's National Hurricane Center (http://www.nhc.noaa.gov/data/)") +
   theme(axis.text = element_text(family = "Varela Round"),
         axis.text.x = element_text(size = 11, colour = "#3C3C3C", face = "bold", vjust = 1),
@@ -78,7 +79,7 @@ plot.pressure.year.main <- ggplot(data = dd,
         axis.ticks.length = unit(5, "mm"),
         axis.line = element_blank(),
         plot.title = element_text(face = "bold", hjust = 0, vjust = -0.5, colour = "#3C3C3C", size = 20),
-        plot.subtitle = element_text(hjust = 0, vjust = -5, colour = "#3C3C3C", size = 11),
+        plot.subtitle = element_text(hjust = 0, vjust = -12, colour = "#3C3C3C", size = 11),
         plot.caption = element_text(size = 8, hjust = 1.6, vjust = -0.1, colour = "#7F8182"),
         panel.background = element_rect(fill = "#FAFAF2"),
         panel.border = element_blank(),
